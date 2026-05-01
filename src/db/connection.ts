@@ -11,6 +11,7 @@ export function getDb(): ReturnType<typeof postgres> {
       max: 10,
       idle_timeout: 20,
       connect_timeout: 10,
+      onnotice: () => {}, // suppress IF NOT EXISTS notices
     });
   }
   return sql;
