@@ -36,3 +36,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Web frontend
 web/node_modules
 web/dist
+
+# Claude
+.claude/
