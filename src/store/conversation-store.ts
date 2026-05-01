@@ -1,0 +1,213 @@
+import { getDb } from "../db/connection";
+
+export interface SessionRecord {
+  id: string;
+  projectPath: string;
+  cwd?: string;
+  model?: string;
+  startedAt: Date;
+  endedAt?: Date;
+  status: string;
+  title?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface MessageRecord {
+  sessionId: string;
+  uuid: string;
+  parentUuid: string | null;
+  role: string;
+  content: string | null;
+  contentBlocks: unknown[];
+  thinking: string | null;
+  isSidechain: boolean;
+  isMeta: boolean;
+  sequenceNum: number;
+  timestamp: Date;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ToolCallRecord {
+  sessionId: string;
+  messageUuid: string;
+  resultUuid?: string;
+  toolUseId: string;
+  toolName: string;
+  input: unknown;
+  output?: string | null;
+  status: string;
+  error?: string | null;
+}
+
+export interface RawEventRecord {
+  sessionId: string;
+  eventType: string;
+  data: unknown;
+  filePath?: string;
+  lineNumber?: number;
+}
+
+export class ConversationStore {
+  async upsertSession(session: SessionRecord): Promise<void> {
+    const sql = getDb();
+    await sql`
+      INSERT INTO sessions (id, project_path, cwd, model, started_at, ended_at, status, title, metadata)
+      VALUES (
+        ${session.id},
+        ${session.projectPath},
+        ${session.cwd ?? null},
+        ${session.model ?? null},
+        ${session.startedAt},
+        ${session.endedAt ?? null},
+        ${session.status},
+        ${session.title ?? null},
+        ${JSON.stringify(session.metadata ?? {})}
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        status = EXCLUDED.status,
+        title = COALESCE(EXCLUDED.title, sessions.title),
+        ended_at = COALESCE(EXCLUDED.ended_at, sessions.ended_at),
+        model = COALESCE(EXCLUDED.model, sessions.model),
+        cwd = COALESCE(EXCLUDED.cwd, sessions.cwd),
+        metadata = EXCLUDED.metadata
+    `;
+  }
+
+  async getSession(id: string): Promise<SessionRecord | null> {
+    const sql = getDb();
+    const rows = await sql`SELECT * FROM sessions WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    const r = rows[0]!;
+    return {
+      id: r.id,
+      projectPath: r.project_path,
+      cwd: r.cwd,
+      model: r.model,
+      startedAt: r.started_at,
+      endedAt: r.ended_at,
+      status: r.status,
+      title: r.title,
+      metadata: r.metadata,
+    };
+  }
+
+  async listSessions(): Promise<SessionRecord[]> {
+    const sql = getDb();
+    const rows = await sql`SELECT * FROM sessions ORDER BY started_at DESC`;
+    return rows.map((r) => ({
+      id: r.id,
+      projectPath: r.project_path,
+      cwd: r.cwd,
+      model: r.model,
+      startedAt: r.started_at,
+      endedAt: r.ended_at,
+      status: r.status,
+      title: r.title,
+      metadata: r.metadata,
+    }));
+  }
+
+  async insertMessage(msg: MessageRecord): Promise<void> {
+    const sql = getDb();
+    await sql`
+      INSERT INTO messages (session_id, uuid, parent_uuid, role, content, content_blocks, thinking, is_sidechain, is_meta, sequence_num, timestamp, metadata)
+      VALUES (
+        ${msg.sessionId},
+        ${msg.uuid},
+        ${msg.parentUuid},
+        ${msg.role},
+        ${msg.content},
+        ${JSON.stringify(msg.contentBlocks)},
+        ${msg.thinking},
+        ${msg.isSidechain},
+        ${msg.isMeta},
+        ${msg.sequenceNum},
+        ${msg.timestamp},
+        ${JSON.stringify(msg.metadata ?? {})}
+      )
+      ON CONFLICT (session_id, uuid) DO NOTHING
+    `;
+  }
+
+  async getMessages(sessionId: string): Promise<MessageRecord[]> {
+    const sql = getDb();
+    const rows = await sql`
+      SELECT * FROM messages WHERE session_id = ${sessionId} ORDER BY sequence_num ASC
+    `;
+    return rows.map((r) => ({
+      sessionId: r.session_id,
+      uuid: r.uuid,
+      parentUuid: r.parent_uuid,
+      role: r.role,
+      content: r.content,
+      contentBlocks: r.content_blocks,
+      thinking: r.thinking,
+      isSidechain: r.is_sidechain,
+      isMeta: r.is_meta,
+      sequenceNum: r.sequence_num,
+      timestamp: r.timestamp,
+      metadata: r.metadata,
+    }));
+  }
+
+  async insertToolCall(tool: ToolCallRecord): Promise<void> {
+    const sql = getDb();
+    await sql`
+      INSERT INTO tool_calls (session_id, message_uuid, tool_use_id, tool_name, input, status)
+      VALUES (
+        ${tool.sessionId},
+        ${tool.messageUuid},
+        ${tool.toolUseId},
+        ${tool.toolName},
+        ${JSON.stringify(tool.input)},
+        ${tool.status}
+      )
+      ON CONFLICT (tool_use_id) DO NOTHING
+    `;
+  }
+
+  async completeToolCall(toolUseId: string, output: string | null, error: string | null): Promise<void> {
+    const sql = getDb();
+    const status = error ? "failed" : "completed";
+    await sql`
+      UPDATE tool_calls SET
+        output = ${output},
+        error = ${error},
+        status = ${status},
+        completed_at = NOW()
+      WHERE tool_use_id = ${toolUseId}
+    `;
+  }
+
+  async getToolCalls(sessionId: string): Promise<ToolCallRecord[]> {
+    const sql = getDb();
+    const rows = await sql`
+      SELECT * FROM tool_calls WHERE session_id = ${sessionId} ORDER BY created_at ASC
+    `;
+    return rows.map((r) => ({
+      sessionId: r.session_id,
+      messageUuid: r.message_uuid,
+      resultUuid: r.result_uuid,
+      toolUseId: r.tool_use_id,
+      toolName: r.tool_name,
+      input: r.input,
+      output: r.output,
+      status: r.status,
+      error: r.error,
+    }));
+  }
+
+  async insertRawEvent(event: RawEventRecord): Promise<void> {
+    const sql = getDb();
+    await sql`
+      INSERT INTO raw_events (session_id, event_type, data, file_path, line_number)
+      VALUES (
+        ${event.sessionId},
+        ${event.eventType},
+        ${JSON.stringify(event.data)},
+        ${event.filePath ?? null},
+        ${event.lineNumber ?? null}
+      )
+    `;
+  }
+}
