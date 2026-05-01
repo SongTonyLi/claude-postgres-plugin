@@ -18,6 +18,8 @@ export function getDb(): ReturnType<typeof postgres> {
 
 export async function closeDb(): Promise<void> {
   if (sql) {
-    await sql.end();
+    const conn = sql;
+    sql = undefined!;
+    await conn.end();
   }
 }

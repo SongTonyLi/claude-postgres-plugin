@@ -21,8 +21,9 @@ export interface PipelineEvents {
 export class IngestPipeline extends EventEmitter<PipelineEvents> {
   readonly watcher: SessionWatcher;
   private store: ConversationStore;
-  private sequenceCounters: Map<string, number> = new Map();
   private knownSessions: Set<string> = new Set();
+  private titledSessions: Set<string> = new Set();
+  private queue: Promise<void> = Promise.resolve();
 
   constructor(store: ConversationStore, watchPath?: string) {
     super();
@@ -32,9 +33,12 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
 
   start(): void {
     this.watcher.on("line", (filePath, line, lineNumber) => {
-      this.processLine(filePath, line, lineNumber).catch((err) => {
-        this.emit("error", err instanceof Error ? err : new Error(String(err)));
-      });
+      // Serialize processing to maintain order and prevent race conditions
+      this.queue = this.queue.then(() =>
+        this.processLine(filePath, line, lineNumber).catch((err) => {
+          this.emit("error", err instanceof Error ? err : new Error(String(err)));
+        })
+      );
     });
 
     this.watcher.on("error", (err) => this.emit("error", err));
@@ -76,8 +80,8 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
       this.emit("session:new", sessionId);
     }
 
-    const seq = this.sequenceCounters.get(sessionId) || 0;
-    this.sequenceCounters.set(sessionId, seq + 1);
+    // Use lineNumber for deterministic ordering (immune to async race conditions)
+    const seq = lineNumber;
 
     if (event.type === "user" || event.type === "assistant") {
       const message = (event.data as any).message;
@@ -88,7 +92,8 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
       const thinking = extractThinking(contentBlocks);
 
       // Auto-generate session title from first real user message
-      if (event.type === "user" && seq === 0 && textContent && !(event.data as any).toolUseResult) {
+      if (event.type === "user" && !this.titledSessions.has(sessionId) && textContent && !(event.data as any).toolUseResult) {
+        this.titledSessions.add(sessionId);
         const title = textContent.slice(0, 100);
         await this.store.upsertSession({
           id: sessionId,
