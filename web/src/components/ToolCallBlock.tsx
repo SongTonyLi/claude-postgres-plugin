@@ -59,15 +59,10 @@ export function ToolCallBlock({ toolName, input, result }: Props) {
             </span>
             {verb}...
           </span>
-        ) : ok ? (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#16a34a", fontSize: 11, fontFamily: "var(--font-sans)", flexShrink: 0 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Saved to DB
-          </span>
         ) : (
-          <span style={{ color: "#dc2626", fontSize: 12 }}>{"\u2717"}</span>
+          <span style={{ color: ok ? "#16a34a" : "#dc2626", fontSize: 12 }}>
+            {ok ? "\u2713" : "\u2717"}
+          </span>
         )}
       </div>
 
