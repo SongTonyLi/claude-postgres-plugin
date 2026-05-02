@@ -41,31 +41,39 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      title="Copy message"
+      title={copied ? "Copied!" : "Copy"}
       style={{
         background: "none",
         border: "none",
         cursor: "pointer",
-        padding: 4,
+        padding: "4px 8px",
         borderRadius: 6,
         color: copied ? "#16a34a" : "#999",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        transition: "color 0.15s",
+        gap: 4,
+        transition: "all 0.15s",
+        fontSize: 12,
+        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
       }}
-      onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = "#6B6B6B"; }}
-      onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = "#999"; }}
+      onMouseEnter={(e) => { if (!copied) { e.currentTarget.style.color = "#6B6B6B"; e.currentTarget.style.background = "#F0F0EC"; } }}
+      onMouseLeave={(e) => { if (!copied) { e.currentTarget.style.color = "#999"; e.currentTarget.style.background = "none"; } }}
     >
       {copied ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+        <>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Copied
+        </>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-        </svg>
+        <>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          Copy
+        </>
       )}
     </button>
   );
@@ -153,6 +161,8 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
         .map((b) => b.text)
         .join("\n") || content || "";
 
+    if (!text.trim()) return null;
+
     return (
       <div className="fade-up" style={{ padding: "8px 0" }}>
         <div
@@ -160,8 +170,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
             background: "#F5F5F0",
             borderRadius: 20,
             padding: "16px 24px",
-            fontSize: 14,
-            lineHeight: 1.6,
+            lineHeight: 1.7,
             color: "#1A1A1A",
           }}
           className="prose-chat"
