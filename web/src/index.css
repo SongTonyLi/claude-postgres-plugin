@@ -47,24 +47,25 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* Markdown prose */
+/* Markdown prose — matches Claude.ai leading-[1.65rem] with gap-3 */
 .prose-chat { word-break: break-word; overflow-wrap: anywhere; max-width: 100%; overflow: hidden; }
-.prose-chat h1, .prose-chat h2, .prose-chat h3 { color: var(--text); font-weight: 600; margin: 12px 0 6px; }
-.prose-chat h1 { font-size: 1.25em; }
-.prose-chat h2 { font-size: 1.1em; }
-.prose-chat h3 { font-size: 1em; color: var(--text-secondary); }
-.prose-chat p { margin: 5px 0; }
-.prose-chat ul, .prose-chat ol { margin: 5px 0; padding-left: 18px; }
-.prose-chat li { margin: 2px 0; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { color: var(--text); font-weight: 700; margin: 20px 0 8px; }
+.prose-chat h1 { font-size: 1.3em; }
+.prose-chat h2 { font-size: 1.15em; }
+.prose-chat h3 { font-size: 1.05em; }
+.prose-chat p { margin: 0 0 12px; line-height: 1.7; }
+.prose-chat p:last-child { margin-bottom: 0; }
+.prose-chat ul, .prose-chat ol { margin: 0 0 12px; padding-left: 28px; }
+.prose-chat li { margin: 4px 0; padding-left: 4px; line-height: 1.7; }
 .prose-chat li::marker { color: var(--text-muted); }
-.prose-chat blockquote { border-left: 2px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 8px 0; }
+.prose-chat blockquote { border-left: 2px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 12px 0; }
 .prose-chat a { color: var(--accent); text-decoration: none; }
 .prose-chat a:hover { text-decoration: underline; }
-.prose-chat strong { color: var(--text); }
-.prose-chat table { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 13px; }
-.prose-chat th, .prose-chat td { border: 1px solid var(--border); padding: 5px 10px; }
+.prose-chat strong { color: var(--text); font-weight: 700; }
+.prose-chat table { border-collapse: collapse; margin: 12px 0; width: 100%; font-size: 14px; }
+.prose-chat th, .prose-chat td { border: 1px solid var(--border); padding: 6px 12px; }
 .prose-chat th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 500; }
-.prose-chat hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.prose-chat hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
 /* Code */
 .prose-chat pre {
@@ -83,11 +84,12 @@ body {
 }
 .prose-chat code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.9em; word-break: break-all; }
 .prose-chat p code, .prose-chat li code {
-  background: var(--code-inline-bg);
+  background: rgba(26, 26, 26, 0.03);
   color: var(--code-inline-color);
+  border: 0.5px solid var(--border);
   padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 0.85em;
+  border-radius: 6px;
+  font-size: 0.88em;
 }
 
 .hljs { background: var(--bg-surface) !important; color: var(--text) !important; }
@@ -95,8 +97,10 @@ body {
 @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .fade-up { animation: fadeUp 0.2s ease-out; }
 .blink { animation: blink 1s step-end infinite; }
+.spin { animation: spin 1.5s linear infinite; }
 
 /* Search result highlight glow — pulses then fades over 10s */
 @keyframes searchGlow {

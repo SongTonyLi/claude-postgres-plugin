@@ -196,25 +196,29 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
 
   // ─── User message: right-aligned bubble, sans-serif ─────
   if (isUser) {
-    const text =
+    const rawText =
       contentBlocks
         .filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text")
         .map((b) => b.text)
         .join("\n") || content || "";
 
-    if (!text.trim()) return null;
+    // Strip XML/HTML tags for display (command-message, system-reminder, etc.)
+    const text = rawText.replace(/<[^>]+>/g, "").trim();
+
+    if (!text) return null;
 
     return (
       <div className="fade-up" style={{ padding: "8px 20px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
         <div
           style={{
             maxWidth: "85%",
-            background: "#F0F0EC",
+            background: "#E8E5DE",
             borderRadius: "16px",
             padding: "10px 16px",
             lineHeight: 1.6,
             color: "#1A1A1A",
             fontFamily: "var(--font-sans)",
+            fontSize: 16,
           }}
         >
           <UserMessageContent text={text} />
