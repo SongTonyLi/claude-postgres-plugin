@@ -40,6 +40,66 @@ export function createApp(store: ConversationStore, sse: SSEManager): Hono {
     return c.json(results);
   });
 
+  // XML export of selected messages
+  app.post("/api/sessions/:id/export-xml", async (c) => {
+    const sessionId = c.req.param("id");
+    const session = await store.getSession(sessionId);
+    if (!session) return c.json({ error: "Not found" }, 404);
+
+    const body = await c.req.json<{ uuids: string[] }>();
+    const allMessages = await store.getMessages(sessionId);
+    const allTools = await store.getToolCalls(sessionId);
+    const toolMap = new Map(allTools.map((t) => [t.toolUseId, t]));
+
+    const selected = body.uuids && body.uuids.length > 0
+      ? allMessages.filter((m) => body.uuids.includes(m.uuid))
+      : allMessages.filter((m) => !m.isMeta);
+
+    const escXml = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<conversation sessionId="${escXml(sessionId)}" title="${escXml(session.title || "")}" exportedAt="${new Date().toISOString()}">\n`;
+
+    for (const msg of selected) {
+      const blocks = Array.isArray(msg.contentBlocks) ? msg.contentBlocks : [];
+      xml += `  <message role="${escXml(msg.role)}" uuid="${escXml(msg.uuid)}" timestamp="${msg.timestamp}">\n`;
+
+      if (msg.content) {
+        xml += `    <content>${escXml(msg.content)}</content>\n`;
+      }
+      if (msg.thinking) {
+        xml += `    <thinking>${escXml(msg.thinking)}</thinking>\n`;
+      }
+
+      for (const block of blocks) {
+        const b = block as any;
+        if (b.type === "tool_use") {
+          const result = toolMap.get(b.id);
+          xml += `    <toolUse name="${escXml(b.name)}" id="${escXml(b.id)}" status="${escXml(result?.status || "pending")}">\n`;
+          xml += `      <input>${escXml(JSON.stringify(b.input))}</input>\n`;
+          if (result?.output) xml += `      <output>${escXml(result.output)}</output>\n`;
+          if (result?.error) xml += `      <error>${escXml(result.error)}</error>\n`;
+          xml += `    </toolUse>\n`;
+        }
+        if (b.type === "tool_result") {
+          const content = typeof b.content === "string" ? b.content : JSON.stringify(b.content);
+          xml += `    <toolResult toolUseId="${escXml(b.tool_use_id)}">${escXml(content)}</toolResult>\n`;
+        }
+      }
+
+      xml += `  </message>\n`;
+    }
+    xml += `</conversation>\n`;
+
+    return new Response(xml, {
+      headers: {
+        "Content-Type": "application/xml",
+        "Content-Disposition": `attachment; filename="session-${sessionId.slice(0, 8)}.xml"`,
+      },
+    });
+  });
+
   // SSE endpoint
   app.get("/api/events/sse", (c) => {
     const sessionId = c.req.query("sessionId") || null;
