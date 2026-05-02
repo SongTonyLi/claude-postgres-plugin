@@ -94,7 +94,17 @@ The plugin detects new session files automatically. No restart needed.
 
 ### Search (Cmd+K)
 
-Press `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux) in the dashboard to open global search. It uses SQL fuzzy matching to search across ALL your conversations.
+Press `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux) or click the search bar in the sidebar to search across ALL your conversations. Uses SQL ILIKE fuzzy matching.
+
+### Export to XML
+
+1. Click **Select** in the conversation header
+2. Check the messages you want to export (or use **Select All**)
+3. Click **Export XML** — downloads an XML file with full conversation content, tool calls, and results
+
+### Hide Sessions
+
+Hover over any session in the sidebar and click the eye icon to hide it. Hidden sessions are excluded from the list but remain in the database.
 
 ### Commands
 
@@ -120,20 +130,23 @@ bun test                     # Run tests
 
 ## Current Status
 
-- [x] PostgreSQL schema + migrations
+- [x] PostgreSQL schema + migrations (ACID transactions)
 - [x] Session file watcher (real-time detection)
 - [x] Ingest pipeline (race-condition safe, deduplication)
 - [x] REST API + SSE real-time streaming
 - [x] Web dashboard (Open WebUI style — sidebar + chat view)
 - [x] Inline tool call and tool result rendering
 - [x] Global search with SQL ILIKE fuzzy matching (Cmd+K)
+- [x] XML export of selected messages
+- [x] Session hiding
+- [x] Message selection with checkboxes
 - [x] 25 tests passing
 - [x] Verified with 134 real sessions, 28k+ messages
 
 ## Next Steps
 
 1. **Live session streaming** — Real-time message appearance in dashboard via SSE during active sessions
-2. **Session resume export** — Export conversation in format for true resume
-3. **Session metadata panel** — Model, token usage, duration, tool stats
-4. **Full-text search with pg_trgm** — Better fuzzy matching with trigram indexes
-5. **Conversation branching** — Visualize sidechain/forked conversations
+2. **Session metadata panel** — Model, token usage, duration, tool stats
+3. **Full-text search with pg_trgm** — Better fuzzy matching with trigram indexes
+4. **Conversation branching** — Visualize sidechain/forked conversations
+5. **Unhide UI** — Settings page to manage hidden sessions
