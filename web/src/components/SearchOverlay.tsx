@@ -3,7 +3,7 @@ import type { SearchResult } from "../api/client";
 import { searchMessages } from "../api/client";
 
 interface Props {
-  onNavigate: (sessionId: string) => void;
+  onNavigate: (sessionId: string, messageUuid: string) => void;
   onClose: () => void;
 }
 
@@ -126,7 +126,7 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
             <div
               key={`${r.sessionId}-${r.uuid}-${i}`}
               onClick={() => {
-                onNavigate(r.sessionId);
+                onNavigate(r.sessionId, r.uuid);
                 onClose();
               }}
               style={{

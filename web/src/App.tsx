@@ -12,6 +12,7 @@ export function App() {
   const [toolCalls, setToolCalls] = useState<api.ToolCall[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [highlightUuid, setHighlightUuid] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -84,7 +85,10 @@ export function App() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       {showSearch && (
         <SearchOverlay
-          onNavigate={setSelectedId}
+          onNavigate={(sessionId, msgUuid) => {
+            setSelectedId(sessionId);
+            setHighlightUuid(msgUuid);
+          }}
           onClose={() => setShowSearch(false)}
         />
       )}
@@ -106,6 +110,8 @@ export function App() {
           sessionStatus={sel?.status || "unknown"}
           sessionCwd={sel?.cwd || null}
           sessionStartedAt={sel?.startedAt || null}
+          highlightUuid={highlightUuid}
+          onHighlightDone={() => setHighlightUuid(null)}
           isLoading={isLoading}
         />
       ) : (

@@ -89,3 +89,13 @@ body {
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .fade-up { animation: fadeUp 0.2s ease-out; }
 .blink { animation: blink 1s step-end infinite; }
+
+/* Search result highlight glow — pulses then fades over 10s */
+@keyframes searchGlow {
+  0% { background: rgba(59, 130, 246, 0.18); border-left-color: #3b82f6; }
+  15% { background: rgba(59, 130, 246, 0.10); }
+  30% { background: rgba(59, 130, 246, 0.16); }
+  50% { background: rgba(59, 130, 246, 0.08); }
+  100% { background: rgba(59, 130, 246, 0.04); border-left-color: rgba(59, 130, 246, 0.3); }
+}
+.search-glow { animation: searchGlow 10s ease-out forwards; }

@@ -11,6 +11,8 @@ interface Props {
   sessionStatus: string;
   sessionCwd: string | null;
   sessionStartedAt: string | null;
+  highlightUuid: string | null;
+  onHighlightDone: () => void;
   isLoading: boolean;
 }
 
@@ -22,11 +24,15 @@ export function ConversationView({
   sessionStatus,
   sessionCwd,
   sessionStartedAt,
+  highlightUuid,
+  onHighlightDone,
   isLoading,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const msgRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+  const [glowUuid, setGlowUuid] = useState<string | null>(null);
 
   const toolMap = new Map<string, ToolCall>();
   for (const tc of toolCalls) toolMap.set(tc.toolUseId, tc);
@@ -35,6 +41,25 @@ export function ConversationView({
   const visibleMsgs = messages.filter(
     (m) => !m.isMeta && !m.contentBlocks.some?.((b: any) => b.type === "tool_result") && m.role !== "system"
   );
+
+  // Scroll to highlighted message and glow for 10s
+  useEffect(() => {
+    if (!highlightUuid || messages.length === 0) return;
+    // Wait a tick for refs to be set after messages load
+    const raf = requestAnimationFrame(() => {
+      const el = msgRefs.current.get(highlightUuid);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setGlowUuid(highlightUuid);
+        const timer = setTimeout(() => {
+          setGlowUuid(null);
+          onHighlightDone();
+        }, 10000);
+        return () => clearTimeout(timer);
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [highlightUuid, messages.length, onHighlightDone]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -191,16 +216,24 @@ export function ConversationView({
             const isSelectable = selectMode && !msg.isMeta && msg.role !== "system"
               && !(Array.isArray(msg.contentBlocks) && msg.contentBlocks.some((b: any) => b.type === "tool_result"));
             const isSelected = selected.has(msg.uuid);
+            const isGlowing = glowUuid === msg.uuid;
 
             return (
               <div
                 key={msg.uuid}
+                ref={(el) => { if (el) msgRefs.current.set(msg.uuid, el); }}
+                className={isGlowing ? "search-glow" : ""}
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
                   position: "relative",
-                  background: isSelected ? "rgba(59, 130, 246, 0.06)" : "transparent",
-                  transition: "background 0.1s",
+                  background: isGlowing
+                    ? "rgba(59, 130, 246, 0.12)"
+                    : isSelected
+                      ? "rgba(59, 130, 246, 0.06)"
+                      : "transparent",
+                  transition: "background 0.5s ease",
+                  borderLeft: isGlowing ? "3px solid #3b82f6" : "3px solid transparent",
                 }}
               >
                 {isSelectable && (

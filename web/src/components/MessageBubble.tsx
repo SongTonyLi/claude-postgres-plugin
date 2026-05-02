@@ -116,6 +116,11 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
     );
   }
 
+  // ─── Assistant message: skip if truly empty ─────
+  const hasText = contentBlocks.some((b) => b.type === "text" && (b as any).text);
+  const hasTools = contentBlocks.some((b) => b.type === "tool_use");
+  if (!hasText && !hasTools && !thinking && !content) return null;
+
   // ─── Assistant message: left-aligned with avatar ─────
   return (
     <div className="fade-up" style={{ padding: "8px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
