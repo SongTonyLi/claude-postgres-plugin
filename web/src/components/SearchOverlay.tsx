@@ -3,7 +3,7 @@ import type { SearchResult } from "../api/client";
 import { searchMessages } from "../api/client";
 
 interface Props {
-  onNavigate: (sessionId: string, messageUuid: string) => void;
+  onNavigate: (sessionId: string, messageUuid: string, searchQuery: string) => void;
   onClose: () => void;
 }
 
@@ -118,12 +118,15 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
               fontSize: 11,
               color: mode === "regex" ? "#3b82f6" : "#999",
               cursor: "pointer",
-              fontFamily: "'JetBrains Mono', monospace",
               whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
             }}
             title={mode === "fuzzy" ? "Switch to regex mode" : "Switch to fuzzy mode"}
           >
-            {mode === "fuzzy" ? ".*" : "/.*/"}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>.*</span>
+            <span style={{ fontFamily: "var(--font-sans)" }}>Regex</span>
           </button>
           <kbd
             style={{
@@ -150,7 +153,7 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
             <div
               key={`${r.sessionId}-${r.uuid}-${i}`}
               onClick={() => {
-                onNavigate(r.sessionId, r.uuid);
+                onNavigate(r.sessionId, r.uuid, query);
                 onClose();
               }}
               style={{
@@ -183,7 +186,7 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
                   lineHeight: 1.4,
                 }}
               >
-                {highlightMatch(r.content || "", query)}
+                {highlightMatch(r.content || "", query, mode)}
               </div>
             </div>
           ))}
@@ -198,16 +201,34 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
   );
 }
 
-function highlightMatch(text: string, query: string): React.ReactNode {
+function highlightMatch(text: string, query: string, mode: "fuzzy" | "regex"): React.ReactNode {
   if (!query) return text;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return text.slice(0, 150);
 
-  const start = Math.max(0, idx - 40);
-  const end = Math.min(text.length, idx + query.length + 80);
-  const before = (start > 0 ? "..." : "") + text.slice(start, idx);
-  const match = text.slice(idx, idx + query.length);
-  const after = text.slice(idx + query.length, end) + (end < text.length ? "..." : "");
+  let matchStart: number;
+  let matchLength: number;
+
+  if (mode === "regex") {
+    try {
+      const re = new RegExp(query, "i");
+      const m = re.exec(text);
+      if (!m) return text.slice(0, 150);
+      matchStart = m.index;
+      matchLength = Math.min(m[0].length, 100);
+    } catch {
+      return text.slice(0, 150);
+    }
+  } else {
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text.slice(0, 150);
+    matchStart = idx;
+    matchLength = query.length;
+  }
+
+  const start = Math.max(0, matchStart - 40);
+  const end = Math.min(text.length, matchStart + matchLength + 80);
+  const before = (start > 0 ? "..." : "") + text.slice(start, matchStart);
+  const match = text.slice(matchStart, matchStart + matchLength);
+  const after = text.slice(matchStart + matchLength, end) + (end < text.length ? "..." : "");
 
   return (
     <>

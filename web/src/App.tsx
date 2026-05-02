@@ -117,6 +117,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [highlightUuid, setHighlightUuid] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -198,9 +199,10 @@ export function App() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       {showSearch && (
         <SearchOverlay
-          onNavigate={(sessionId, msgUuid) => {
+          onNavigate={(sessionId, msgUuid, query) => {
             setSelectedId(sessionId);
             setHighlightUuid(msgUuid);
+            setSearchQuery(query);
           }}
           onClose={() => setShowSearch(false)}
         />
@@ -216,6 +218,7 @@ export function App() {
 
       {selectedId ? (
         <ConversationView
+          key={selectedId}
           messages={messages}
           toolCalls={toolCalls}
           sessionId={selectedId}
@@ -224,7 +227,8 @@ export function App() {
           sessionCwd={sel?.cwd || null}
           sessionStartedAt={sel?.startedAt || null}
           highlightUuid={highlightUuid}
-          onHighlightDone={() => setHighlightUuid(null)}
+          searchQuery={searchQuery}
+          onHighlightDone={() => { setHighlightUuid(null); setSearchQuery(null); }}
           isLoading={isLoading}
         />
       ) : (

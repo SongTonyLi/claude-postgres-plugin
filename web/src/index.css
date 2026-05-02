@@ -100,7 +100,11 @@ body {
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .fade-up { animation: fadeUp 0.2s ease-out; }
 .blink { animation: blink 1s step-end infinite; }
-.spin { animation: spin 1.5s linear infinite; }
+.spin {
+  animation: spin 2.5s linear infinite;
+  -webkit-mask-image: conic-gradient(from 0deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.3) 15%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.9) 75%, black 100%);
+  mask-image: conic-gradient(from 0deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.3) 15%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.9) 75%, black 100%);
+}
 
 /* Search result highlight glow — pulses then fades over 10s */
 @keyframes searchGlow {
@@ -111,3 +115,10 @@ body {
   100% { background: rgba(59, 130, 246, 0.02); border-left-color: rgba(59, 130, 246, 0.2); }
 }
 .search-glow { animation: searchGlow 10s ease-out forwards; }
+
+/* Conversation view entrance */
+@keyframes conversationEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.conversation-enter { animation: conversationEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1); }

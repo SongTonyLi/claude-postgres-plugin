@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, Fragment } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -13,6 +13,7 @@ interface Props {
   thinking: string | null;
   isMeta: boolean;
   toolCalls: Map<string, ToolCall>;
+  highlightQuery?: string | null;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -66,7 +67,50 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function UserMessageContent({ text }: { text: string }) {
+function highlightText(text: string, query: string): React.ReactNode {
+  if (!query || !text) return text;
+  let regex: RegExp;
+  try {
+    regex = new RegExp(query, "gi");
+  } catch {
+    regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+  }
+
+  const parts: React.ReactNode[] = [];
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  let safety = 0;
+
+  while ((match = regex.exec(text)) !== null && safety++ < 100) {
+    if (match[0].length === 0) { regex.lastIndex++; continue; }
+    if (match.index > lastIdx) parts.push(text.slice(lastIdx, match.index));
+    parts.push(
+      <mark key={key++} style={{ background: "rgba(59, 130, 246, 0.25)", borderRadius: 2, padding: "0 1px" }}>
+        {match[0]}
+      </mark>
+    );
+    lastIdx = match.index + match[0].length;
+  }
+  if (parts.length === 0) return text;
+  if (lastIdx < text.length) parts.push(text.slice(lastIdx));
+
+  return <>{parts}</>;
+}
+
+function mapTextChildren(children: React.ReactNode, query: string): React.ReactNode {
+  if (typeof children === "string") return highlightText(children, query);
+  if (Array.isArray(children)) {
+    return children.map((child, i) =>
+      typeof child === "string"
+        ? <Fragment key={i}>{highlightText(child, query)}</Fragment>
+        : child
+    );
+  }
+  return children;
+}
+
+function UserMessageContent({ text, highlightQuery }: { text: string; highlightQuery?: string | null }) {
   const [expanded, setExpanded] = useState(false);
   const maxHeight = 200;
   const isLong = text.length > 600;
@@ -81,7 +125,9 @@ function UserMessageContent({ text }: { text: string }) {
           fontFamily: "var(--font-sans)",
         }}
       >
-        <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{text}</div>
+        <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {highlightQuery ? highlightText(text, highlightQuery) : text}
+        </div>
         {!expanded && isLong && (
           <div
             style={{
@@ -120,7 +166,21 @@ function UserMessageContent({ text }: { text: string }) {
   );
 }
 
-export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls }: Props) {
+export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls, highlightQuery }: Props) {
+  const highlightComponents = useMemo(() => {
+    if (!highlightQuery) return undefined;
+    const hl = (children: React.ReactNode) => mapTextChildren(children, highlightQuery);
+    return {
+      p: ({ node, children, ...props }: any) => <p {...props}>{hl(children)}</p>,
+      li: ({ node, children, ...props }: any) => <li {...props}>{hl(children)}</li>,
+      h1: ({ node, children, ...props }: any) => <h1 {...props}>{hl(children)}</h1>,
+      h2: ({ node, children, ...props }: any) => <h2 {...props}>{hl(children)}</h2>,
+      h3: ({ node, children, ...props }: any) => <h3 {...props}>{hl(children)}</h3>,
+      td: ({ node, children, ...props }: any) => <td {...props}>{hl(children)}</td>,
+      th: ({ node, children, ...props }: any) => <th {...props}>{hl(children)}</th>,
+    };
+  }, [highlightQuery]);
+
   if (isMeta) return null;
 
   const contentBlocks: ContentBlock[] = Array.isArray(rawBlocks) ? rawBlocks : [];
@@ -202,8 +262,13 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
         .map((b) => b.text)
         .join("\n") || content || "";
 
-    // Strip XML/HTML tags for display (command-message, system-reminder, etc.)
-    const text = rawText.replace(/<[^>]+>/g, "").trim();
+    // Strip XML/HTML tags and normalize inter-tag whitespace
+    const text = rawText
+      .replace(/<[^>]+>/g, "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l)
+      .join("\n");
 
     if (!text) return null;
 
@@ -221,7 +286,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
             fontSize: 16,
           }}
         >
-          <UserMessageContent text={text} />
+          <UserMessageContent text={text} highlightQuery={highlightQuery} />
         </div>
       </div>
     );
@@ -266,7 +331,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
           if (block.type === "text" && block.text) {
             return (
               <div key={i} className="prose-chat" style={{ fontFamily: "var(--font-serif)" }}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]} components={highlightComponents}>
                   {block.text}
                 </ReactMarkdown>
               </div>
@@ -287,7 +352,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
 
         {contentBlocks.length === 0 && content && (
           <div className="prose-chat" style={{ fontFamily: "var(--font-serif)" }}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]} components={highlightComponents}>
               {content}
             </ReactMarkdown>
           </div>
