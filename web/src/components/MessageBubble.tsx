@@ -36,12 +36,56 @@ export function MessageBubble({ role, content, contentBlocks, thinking, isMeta, 
     );
   }
 
-  // Skip tool_result user messages
-  if (contentBlocks.some((b) => b.type === "tool_result")) return null;
-
   const isUser = role === "user";
+  const isToolResult = contentBlocks.some((b) => b.type === "tool_result");
 
-  // ─── User message: right-aligned bubble (Open WebUI style) ─────
+  // ─── Tool result messages: show inline with output ─────
+  if (isToolResult) {
+    return (
+      <div className="fade-up" style={{ padding: "2px 20px 2px 64px" }}>
+        {contentBlocks.map((block, i) => {
+          if (block.type !== "tool_result") return null;
+          const resultContent =
+            typeof block.content === "string"
+              ? block.content
+              : Array.isArray(block.content)
+                ? (block.content as any[])
+                    .filter((c: any) => c.type === "text")
+                    .map((c: any) => c.text)
+                    .join("\n")
+                : "";
+          if (!resultContent) return null;
+
+          return (
+            <div
+              key={i}
+              style={{
+                background: block.is_error ? "rgba(239, 68, 68, 0.06)" : "#1a1a1a",
+                border: `1px solid ${block.is_error ? "rgba(239, 68, 68, 0.2)" : "#2a2a2a"}`,
+                borderRadius: 8,
+                padding: "6px 10px",
+                fontSize: 12,
+                fontFamily: "'JetBrains Mono', monospace",
+                color: block.is_error ? "#ef4444" : "#888",
+                maxHeight: 200,
+                overflowY: "auto",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                lineHeight: 1.5,
+                marginBottom: 4,
+              }}
+            >
+              {resultContent.length > 2000
+                ? resultContent.slice(0, 2000) + "\n... (truncated)"
+                : resultContent}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ─── User message: right-aligned bubble ─────
   if (isUser) {
     const text =
       contentBlocks
@@ -50,7 +94,7 @@ export function MessageBubble({ role, content, contentBlocks, thinking, isMeta, 
         .join("\n") || content || "";
 
     return (
-      <div className="fade-up" style={{ padding: "6px 20px", display: "flex", justifyContent: "flex-end" }}>
+      <div className="fade-up" style={{ padding: "8px 20px", display: "flex", justifyContent: "flex-end" }}>
         <div
           style={{
             maxWidth: "85%",
@@ -69,9 +113,9 @@ export function MessageBubble({ role, content, contentBlocks, thinking, isMeta, 
     );
   }
 
-  // ─── Assistant message: left-aligned with avatar (Open WebUI style) ─────
+  // ─── Assistant message: left-aligned with avatar ─────
   return (
-    <div className="fade-up" style={{ padding: "6px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+    <div className="fade-up" style={{ padding: "8px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
       {/* Avatar */}
       <div
         style={{
@@ -84,22 +128,16 @@ export function MessageBubble({ role, content, contentBlocks, thinking, isMeta, 
           justifyContent: "center",
           flexShrink: 0,
           marginTop: 2,
-          fontSize: 14,
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5z" />
-          <path d="M17 14a7 7 0 0 1-14 0" />
-          <path d="M12 18v4" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0, maxWidth: "calc(100% - 50px)" }}>
-        {/* Model label */}
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#a1a1a1", marginBottom: 4 }}>
-          Claude
-        </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#a1a1a1", marginBottom: 4 }}>Claude</div>
 
         {thinking && <ThinkingBlock content={thinking} />}
 
