@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SessionSidebar } from "./components/SessionSidebar";
 import { ConversationView } from "./components/ConversationView";
+import { SearchOverlay } from "./components/SearchOverlay";
 import { useSSE } from "./hooks/useSSE";
 import * as api from "./api/client";
 
@@ -10,6 +11,19 @@ export function App() {
   const [messages, setMessages] = useState<api.Message[]>([]);
   const [toolCalls, setToolCalls] = useState<api.ToolCall[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  // Ctrl+K / Cmd+K to open search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     api.listSessions().then(setSessions).catch(console.error);
@@ -65,6 +79,12 @@ export function App() {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      {showSearch && (
+        <SearchOverlay
+          onNavigate={setSelectedId}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
       <SessionSidebar
         sessions={sessions}
         selectedId={selectedId}

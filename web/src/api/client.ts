@@ -61,6 +61,15 @@ export async function getMessages(sessionId: string): Promise<Message[]> {
   return res.json();
 }
 
+export interface SearchResult extends Message {
+  sessionTitle?: string;
+}
+
+export async function searchMessages(query: string): Promise<SearchResult[]> {
+  const res = await fetch(`${BASE}/api/search?q=${encodeURIComponent(query)}`);
+  return res.json();
+}
+
 export async function getToolCalls(sessionId: string): Promise<ToolCall[]> {
   const res = await fetch(`${BASE}/api/sessions/${sessionId}/tools`);
   return res.json();

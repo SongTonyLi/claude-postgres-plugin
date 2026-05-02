@@ -33,6 +33,13 @@ export function createApp(store: ConversationStore, sse: SSEManager): Hono {
     return c.json(tools);
   });
 
+  app.get("/api/search", async (c) => {
+    const q = c.req.query("q");
+    if (!q || q.length < 2) return c.json([]);
+    const results = await store.searchMessages(q, 50);
+    return c.json(results);
+  });
+
   // SSE endpoint
   app.get("/api/events/sse", (c) => {
     const sessionId = c.req.query("sessionId") || null;

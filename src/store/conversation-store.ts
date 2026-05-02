@@ -204,6 +204,36 @@ export class ConversationStore {
     }));
   }
 
+  async searchMessages(query: string, limit: number = 50): Promise<(MessageRecord & { sessionTitle?: string })[]> {
+    const sql = getDb();
+    const pattern = `%${query}%`;
+    const rows = await sql`
+      SELECT m.*, s.title as session_title
+      FROM messages m
+      JOIN sessions s ON m.session_id = s.id
+      WHERE m.content ILIKE ${pattern}
+        AND m.is_meta = false
+        AND m.role IN ('user', 'assistant')
+      ORDER BY m.timestamp DESC
+      LIMIT ${limit}
+    `;
+    return rows.map((r) => ({
+      sessionId: r.session_id,
+      uuid: r.uuid,
+      parentUuid: r.parent_uuid,
+      role: r.role,
+      content: r.content,
+      contentBlocks: r.content_blocks,
+      thinking: r.thinking,
+      isSidechain: r.is_sidechain,
+      isMeta: r.is_meta,
+      sequenceNum: r.sequence_num,
+      timestamp: r.timestamp,
+      metadata: r.metadata,
+      sessionTitle: r.session_title,
+    }));
+  }
+
   async insertRawEvent(event: RawEventRecord): Promise<void> {
     const sql = getDb();
     await sql`
