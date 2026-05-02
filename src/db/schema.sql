@@ -53,6 +53,10 @@ CREATE TABLE IF NOT EXISTS raw_events (
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Enable trigram extension for fuzzy search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX IF NOT EXISTS idx_messages_content_trgm ON messages USING gin (content gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, sequence_num);
 CREATE INDEX IF NOT EXISTS idx_messages_uuid ON messages(session_id, uuid);
 CREATE INDEX IF NOT EXISTS idx_tool_calls_session ON tool_calls(session_id);

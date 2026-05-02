@@ -11,6 +11,7 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"fuzzy" | "regex">("fuzzy");
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -27,7 +28,7 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const doSearch = useCallback((q: string) => {
+  const doSearch = useCallback((q: string, m: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (q.length < 2) {
       setResults([]);
@@ -36,7 +37,7 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const r = await searchMessages(q);
+        const r = await searchMessages(q, m);
         setResults(r);
       } catch {
         setResults([]);
@@ -47,7 +48,13 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
 
   const handleChange = (val: string) => {
     setQuery(val);
-    doSearch(val);
+    doSearch(val, mode);
+  };
+
+  const toggleMode = () => {
+    const next = mode === "fuzzy" ? "regex" : "fuzzy";
+    setMode(next);
+    if (query.length >= 2) doSearch(query, next);
   };
 
   return (
@@ -101,6 +108,23 @@ export function SearchOverlay({ onNavigate, onClose }: Props) {
             }}
           />
           {loading && <span style={{ fontSize: 11, color: "#999" }}>searching...</span>}
+          <button
+            onClick={toggleMode}
+            style={{
+              padding: "2px 8px",
+              borderRadius: 4,
+              background: mode === "regex" ? "rgba(59, 130, 246, 0.08)" : "#F0F0EC",
+              border: mode === "regex" ? "1px solid rgba(59, 130, 246, 0.2)" : "1px solid #E5E5E2",
+              fontSize: 11,
+              color: mode === "regex" ? "#3b82f6" : "#999",
+              cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace",
+              whiteSpace: "nowrap",
+            }}
+            title={mode === "fuzzy" ? "Switch to regex mode" : "Switch to fuzzy mode"}
+          >
+            {mode === "fuzzy" ? ".*" : "/.*/"}
+          </button>
           <kbd
             style={{
               padding: "2px 6px",

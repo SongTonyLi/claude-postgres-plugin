@@ -214,19 +214,38 @@ export class ConversationStore {
     }));
   }
 
-  async searchMessages(query: string, limit: number = 50): Promise<(MessageRecord & { sessionTitle?: string })[]> {
+  async searchMessages(query: string, limit: number = 50, mode: string = "fuzzy"): Promise<(MessageRecord & { sessionTitle?: string })[]> {
     const sql = getDb();
-    const pattern = `%${query}%`;
-    const rows = await sql`
-      SELECT m.*, s.title as session_title
-      FROM messages m
-      JOIN sessions s ON m.session_id = s.id
-      WHERE m.content ILIKE ${pattern}
-        AND m.is_meta = false
-        AND m.role IN ('user', 'assistant')
-      ORDER BY m.timestamp DESC
-      LIMIT ${limit}
-    `;
+    let rows;
+    if (mode === "regex") {
+      rows = await sql`
+        SELECT m.*, s.title as session_title
+        FROM messages m
+        JOIN sessions s ON m.session_id = s.id
+        WHERE m.content ~* ${query}
+          AND m.is_meta = false
+          AND m.role IN ('user', 'assistant')
+        ORDER BY m.timestamp DESC
+        LIMIT ${limit}
+      `;
+    } else {
+      // Fuzzy: use trigram similarity + ILIKE fallback
+      const pattern = `%${query}%`;
+      rows = await sql`
+        SELECT m.*, s.title as session_title,
+          COALESCE(similarity(m.content, ${query}), 0) as sim
+        FROM messages m
+        JOIN sessions s ON m.session_id = s.id
+        WHERE (m.content ILIKE ${pattern} OR similarity(m.content, ${query}) > 0.1)
+          AND m.is_meta = false
+          AND m.role IN ('user', 'assistant')
+        ORDER BY
+          CASE WHEN m.content ILIKE ${pattern} THEN 0 ELSE 1 END,
+          sim DESC,
+          m.timestamp DESC
+        LIMIT ${limit}
+      `;
+    }
     return rows.map((r) => ({
       sessionId: r.session_id,
       uuid: r.uuid,

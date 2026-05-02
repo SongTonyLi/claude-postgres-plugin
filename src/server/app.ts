@@ -35,8 +35,9 @@ export function createApp(store: ConversationStore, sse: SSEManager): Hono {
 
   app.get("/api/search", async (c) => {
     const q = c.req.query("q");
+    const mode = c.req.query("mode") || "fuzzy";
     if (!q || q.length < 2) return c.json([]);
-    const results = await store.searchMessages(q, 50);
+    const results = await store.searchMessages(q, 50, mode);
     return c.json(results);
   });
 

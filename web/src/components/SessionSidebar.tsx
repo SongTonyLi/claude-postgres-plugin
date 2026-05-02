@@ -257,8 +257,11 @@ function projectName(path: string): string {
 function cleanTitle(title: string | null): string {
   if (!title) return "";
   return title
+    .replace(/<[^>]+>/g, "")
     .replace(/^\[Request interrupted.*?\]\s*/, "")
     .replace(/^\[Image #\d+\]\s*/, "")
     .replace(/^Base directory for this skill:.*/, "")
+    .replace(/^\/\w+.*/, "")
+    .trim()
     .slice(0, 80);
 }

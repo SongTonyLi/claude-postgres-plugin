@@ -65,8 +65,8 @@ export interface SearchResult extends Message {
   sessionTitle?: string;
 }
 
-export async function searchMessages(query: string): Promise<SearchResult[]> {
-  const res = await fetch(`${BASE}/api/search?q=${encodeURIComponent(query)}`);
+export async function searchMessages(query: string, mode: string = "fuzzy"): Promise<SearchResult[]> {
+  const res = await fetch(`${BASE}/api/search?q=${encodeURIComponent(query)}&mode=${mode}`);
   return res.json();
 }
 

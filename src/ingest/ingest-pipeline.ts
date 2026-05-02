@@ -249,6 +249,12 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
 
 /** Derive a clean title from the first user message (like claude-plus-plus). */
 function deriveSessionTitle(content: string): string {
-  const firstLine = content.split("\n")[0] || content;
-  return firstLine.replace(/\s+/g, " ").trim().slice(0, 80);
+  // Strip XML/HTML tags, command markers, skill invocations
+  const cleaned = content
+    .replace(/<[^>]+>/g, "")
+    .replace(/^\[(?:Request interrupted|Image #\d+)\].*$/m, "")
+    .replace(/^Base directory for this skill:.*$/m, "")
+    .replace(/^\s*\/\w+.*$/m, "");
+  const firstLine = (cleaned.split("\n").find((l) => l.trim()) || cleaned).trim();
+  return firstLine.replace(/\s+/g, " ").slice(0, 80);
 }
