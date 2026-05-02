@@ -15,8 +15,9 @@ interface Props {
 
 export function ToolCallBlock({ toolName, input, result }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const ok = result?.status === "completed";
-  const fail = result?.status === "failed";
+  const hasOutput = result?.output != null || result?.error != null;
+  const fail = result?.status === "failed" || (hasOutput && result?.error != null);
+  const ok = result?.status === "completed" || (hasOutput && !fail);
   const pending = !ok && !fail;
   const summary = inputSummary(toolName, input);
   const verb = useMemo(() => SPINNER_VERBS[Math.floor(Math.random() * SPINNER_VERBS.length)], []);

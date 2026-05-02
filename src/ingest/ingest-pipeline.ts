@@ -98,8 +98,9 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
       if (event.type === "assistant") {
         toolUses = extractToolUses(contentBlocks);
       }
-      if (event.type === "user" && (event.data as any).toolUseResult) {
-        toolResults = extractToolResults(contentBlocks);
+      if (event.type === "user") {
+        const extracted = extractToolResults(contentBlocks);
+        if (extracted.length > 0) toolResults = extracted;
       }
     }
 
