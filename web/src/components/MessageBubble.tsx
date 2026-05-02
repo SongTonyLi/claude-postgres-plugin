@@ -14,6 +14,8 @@ interface Props {
   isMeta: boolean;
   toolCalls: Map<string, ToolCall>;
   highlightQuery?: string | null;
+  sessionId?: string;
+  messageUuid?: string;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -166,7 +168,97 @@ function UserMessageContent({ text, highlightQuery }: { text: string; highlightQ
   );
 }
 
-export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls, highlightQuery }: Props) {
+function AttachmentViewer({ src, mediaType, onClose }: { src: string; mediaType: string; onClose: () => void }) {
+  const isImage = mediaType.startsWith("image/");
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: 12,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          border: "1px solid #E5E5E2",
+          overflow: "hidden",
+          resize: "both",
+          minWidth: 300,
+          minHeight: 200,
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ padding: "6px 12px", borderBottom: "1px solid #E5E5E2", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <span style={{ fontSize: 11, color: "#999" }}>{mediaType}</span>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#999", padding: "2px 6px", borderRadius: 4 }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#F0F0EC"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+          >
+            {"\u2715"}
+          </button>
+        </div>
+        <div style={{ flex: 1, overflow: "auto", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
+          {isImage ? (
+            <img src={src} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 4 }} />
+          ) : (
+            <embed src={src} type={mediaType} style={{ width: "100%", height: "100%", minHeight: 500 }} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttachmentBlock({ sessionId, messageUuid, blockIndex, mediaType }: { sessionId: string; messageUuid: string; blockIndex: number; mediaType: string }) {
+  const [open, setOpen] = useState(false);
+  const src = `/api/sessions/${sessionId}/messages/${messageUuid}/attachment/${blockIndex}`;
+  const isImage = mediaType.startsWith("image/");
+  const isPdf = mediaType === "application/pdf";
+
+  return (
+    <>
+      <div
+        onClick={() => setOpen(true)}
+        style={{
+          margin: "6px 0",
+          borderRadius: 10,
+          border: "1px solid #E5E5E2",
+          background: "#FAFAF8",
+          overflow: "hidden",
+          cursor: "pointer",
+          transition: "border-color 0.15s",
+          maxWidth: 320,
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E5E5E2"; }}
+      >
+        {isImage ? (
+          <img src={src} style={{ display: "block", maxWidth: "100%", maxHeight: 240, objectFit: "contain", borderRadius: "10px 10px 0 0" }} loading="lazy" />
+        ) : (
+          <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 8 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span style={{ fontSize: 12, color: "#6B6B6B" }}>{isPdf ? "PDF Document" : mediaType}</span>
+          </div>
+        )}
+        <div style={{ padding: "4px 10px 6px", fontSize: 10, color: "#999" }}>
+          {isImage ? "Image" : isPdf ? "PDF" : "Document"} &middot; Click to view
+        </div>
+      </div>
+      {open && <AttachmentViewer src={src} mediaType={mediaType} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls, highlightQuery, sessionId, messageUuid }: Props) {
   const highlightComponents = useMemo(() => {
     if (!highlightQuery) return undefined;
     const hl = (children: React.ReactNode) => mapTextChildren(children, highlightQuery);
@@ -270,24 +362,36 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
       .filter((l) => l)
       .join("\n");
 
-    if (!text) return null;
+    const hasImages = contentBlocks.some((b) => b.type === "image" || b.type === "document");
+    if (!text && !hasImages) return null;
 
     return (
       <div className="fade-up" style={{ padding: "8px 20px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-        <div
-          style={{
-            maxWidth: "85%",
-            background: "#E8E5DE",
-            borderRadius: "16px",
-            padding: "10px 16px",
-            lineHeight: 1.6,
-            color: "#1A1A1A",
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-          }}
-        >
-          <UserMessageContent text={text} highlightQuery={highlightQuery} />
-        </div>
+        {hasImages && sessionId && messageUuid && (
+          <div style={{ maxWidth: "85%", display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>
+            {contentBlocks.map((block, i) => {
+              if (block.type !== "image" && block.type !== "document") return null;
+              const mt = (block as any).source?.media_type || (block as any).source?.mediaType || "image/png";
+              return <AttachmentBlock key={i} sessionId={sessionId} messageUuid={messageUuid} blockIndex={i} mediaType={mt} />;
+            })}
+          </div>
+        )}
+        {text && (
+          <div
+            style={{
+              maxWidth: "85%",
+              background: "#E8E5DE",
+              borderRadius: "16px",
+              padding: "10px 16px",
+              lineHeight: 1.6,
+              color: "#1A1A1A",
+              fontFamily: "var(--font-sans)",
+              fontSize: 16,
+            }}
+          >
+            <UserMessageContent text={text} highlightQuery={highlightQuery} />
+          </div>
+        )}
       </div>
     );
   }
@@ -295,7 +399,8 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   // ─── Assistant message: skip if truly empty ─────
   const hasText = contentBlocks.some((b) => b.type === "text" && (b as any).text);
   const hasTools = contentBlocks.some((b) => b.type === "tool_use");
-  if (!hasText && !hasTools && !thinking && !content) return null;
+  const hasAttachments = contentBlocks.some((b) => b.type === "image" || b.type === "document");
+  if (!hasText && !hasTools && !hasAttachments && !thinking && !content) return null;
 
   // Build full copyable text including thinking, tool calls, and results
   const allText = (() => {
@@ -346,6 +451,10 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
                 result={toolCalls.get(block.id)}
               />
             );
+          }
+          if ((block.type === "image" || block.type === "document") && sessionId && messageUuid) {
+            const mt = (block as any).source?.media_type || (block as any).source?.mediaType || "image/png";
+            return <AttachmentBlock key={i} sessionId={sessionId} messageUuid={messageUuid} blockIndex={i} mediaType={mt} />;
           }
           return null;
         })}

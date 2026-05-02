@@ -329,6 +329,8 @@ export function ConversationView({
                     isMeta={msg.isMeta}
                     toolCalls={toolMap}
                     highlightQuery={isGlowing ? searchQuery : null}
+                    sessionId={sessionId}
+                    messageUuid={msg.uuid}
                   />
                 </div>
               </div>

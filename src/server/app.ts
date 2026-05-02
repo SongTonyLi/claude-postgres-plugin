@@ -25,7 +25,34 @@ export function createApp(store: ConversationStore, sse: SSEManager): Hono {
 
   app.get("/api/sessions/:id/messages", async (c) => {
     const messages = await store.getMessages(c.req.param("id"));
+    // Strip base64 data from image/document blocks for performance
+    for (const m of messages) {
+      if (Array.isArray(m.contentBlocks)) {
+        m.contentBlocks = m.contentBlocks.map((b: any) => {
+          if ((b.type === "image" || b.type === "document") && b.source?.data) {
+            return { ...b, source: { ...b.source, data: "__stripped__" } };
+          }
+          return b;
+        });
+      }
+    }
     return c.json(messages);
+  });
+
+  // Serve image/document attachment from a message's content blocks
+  app.get("/api/sessions/:sessionId/messages/:uuid/attachment/:index", async (c) => {
+    const sessionId = c.req.param("sessionId");
+    const uuid = c.req.param("uuid");
+    const idx = parseInt(c.req.param("index"));
+    const result = await store.getMessageAttachment(sessionId, uuid, idx);
+    if (!result) return c.json({ error: "Not found" }, 404);
+    const binary = Buffer.from(result.data, "base64");
+    return new Response(binary, {
+      headers: {
+        "Content-Type": result.mediaType,
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
   });
 
   app.get("/api/sessions/:id/tools", async (c) => {

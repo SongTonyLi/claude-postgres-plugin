@@ -166,6 +166,22 @@ export class ConversationStore {
     }));
   }
 
+  async getMessageAttachment(sessionId: string, uuid: string, blockIndex: number): Promise<{ data: string; mediaType: string } | null> {
+    const sql = getDb();
+    const rows = await sql`
+      SELECT content_blocks FROM messages WHERE session_id = ${sessionId} AND uuid = ${uuid}
+    `;
+    if (rows.length === 0) return null;
+    const blocks = rows[0].content_blocks as any[];
+    const block = blocks?.[blockIndex];
+    if (!block || (block.type !== "image" && block.type !== "document")) return null;
+    if (!block.source?.data) return null;
+    return {
+      data: block.source.data,
+      mediaType: block.source.media_type || block.source.mediaType || "image/png",
+    };
+  }
+
   async insertToolCall(tool: ToolCallRecord, tx?: Sql): Promise<void> {
     const sql = tx || getDb();
     await sql`

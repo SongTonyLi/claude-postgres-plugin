@@ -44,7 +44,9 @@ export type ContentBlock =
   | { type: "text"; text: string }
   | { type: "thinking"; thinking: string }
   | { type: "tool_use"; id: string; name: string; input: unknown }
-  | { type: "tool_result"; tool_use_id: string; content: unknown; is_error?: boolean };
+  | { type: "tool_result"; tool_use_id: string; content: unknown; is_error?: boolean }
+  | { type: "image"; source: { type: string; media_type?: string; data?: string } }
+  | { type: "document"; source: { type: string; media_type?: string; data?: string } };
 
 export async function listSessions(): Promise<Session[]> {
   const res = await fetch(`${BASE}/api/sessions`);
