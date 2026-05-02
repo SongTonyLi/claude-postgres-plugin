@@ -228,10 +228,29 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   const hasTools = contentBlocks.some((b) => b.type === "tool_use");
   if (!hasText && !hasTools && !thinking && !content) return null;
 
-  const allText = contentBlocks
-    .filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text" && !!(b as any).text)
-    .map((b) => b.text)
-    .join("\n") || content || "";
+  // Build full copyable text including thinking, tool calls, and results
+  const allText = (() => {
+    const parts: string[] = [];
+    if (thinking) parts.push(`<thinking>\n${thinking}\n</thinking>`);
+    for (const block of contentBlocks) {
+      if (block.type === "text" && block.text) {
+        parts.push(block.text);
+      } else if (block.type === "tool_use") {
+        const tc = toolCalls.get(block.id);
+        let toolText = `[Tool: ${block.name}]`;
+        if (block.input && typeof block.input === "object") {
+          const inp = block.input as Record<string, unknown>;
+          if (inp.command) toolText += `\n$ ${inp.command}`;
+          else if (inp.file_path) toolText += `\n${inp.file_path}`;
+          else if (inp.pattern) toolText += `\n${inp.pattern}`;
+        }
+        if (tc?.output) toolText += `\n${tc.output}`;
+        if (tc?.error) toolText += `\n[Error] ${tc.error}`;
+        parts.push(toolText);
+      }
+    }
+    return parts.join("\n\n") || content || "";
+  })();
 
   // ─── Assistant message: serif font, copy button, Claude logo ─────
   return (
@@ -270,7 +289,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
           </div>
         )}
 
-        {hasText && (
+        {allText && (
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
             <CopyButton text={allText} />
           </div>

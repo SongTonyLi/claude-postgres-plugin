@@ -111,10 +111,7 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
 
     if (messageData) {
       this.emit("message:new", sessionId, event.uuid, messageData.role, messageData);
-
-      for (const tr of toolResults) {
-        this.emit("tool:update", sessionId, tr.toolUseId);
-      }
+      // tool:update is emitted AFTER DB flush so status is queryable
     }
 
     if (event.type === "system") {
@@ -170,7 +167,7 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
             projectPath,
             startedAt: new Date(event.timestamp),
             status: "active",
-            title: messageData.content.slice(0, 100),
+            title: deriveSessionTitle(messageData.content),
           }, tx);
         }
 
@@ -229,6 +226,15 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
         }, tx);
       }
     });
+
+    // Emit tool:update AFTER DB commit so status is queryable
+    for (const tr of toolResults) {
+      this.emit("tool:update", sessionId, tr.toolUseId);
+    }
+  }
+
+  private deriveSessionTitle(content: string): string {
+    return deriveSessionTitle(content);
   }
 
   private deriveProjectPath(filePath: string): string {
@@ -239,4 +245,10 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
     }
     return dirname(filePath);
   }
+}
+
+/** Derive a clean title from the first user message (like claude-plus-plus). */
+function deriveSessionTitle(content: string): string {
+  const firstLine = content.split("\n")[0] || content;
+  return firstLine.replace(/\s+/g, " ").trim().slice(0, 80);
 }
