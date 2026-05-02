@@ -90,7 +90,7 @@ function UserMessageContent({ text }: { text: string }) {
               left: 0,
               right: 0,
               height: 48,
-              background: "linear-gradient(to top, #F0F0EC 0%, transparent 100%)",
+              background: "linear-gradient(to top, #E8E5DE 0%, transparent 100%)",
               pointerEvents: "none",
             }}
           />
@@ -256,9 +256,9 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
     return parts.join("\n\n") || content || "";
   })();
 
-  // ─── Assistant message: serif font, copy button, Claude logo ─────
+  // ─── Assistant message: serif font, copy button ─────
   return (
-    <div className="fade-up" style={{ padding: "12px 20px" }}>
+    <div className="fade-up" style={{ padding: "12px 4px" }}>
       <div style={{ minWidth: 0, fontFamily: "var(--font-serif)", lineHeight: "1.65rem" }}>
         {thinking && <ThinkingBlock content={thinking} />}
 

@@ -105,7 +105,7 @@ export function ConversationView({
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", background: "#F9F8F6" }}>
-      {/* Top navbar — matches Claude.ai header */}
+      {/* Top navbar */}
       <div
         style={{
           padding: "0 12px",
@@ -254,7 +254,7 @@ export function ConversationView({
             marginBottom: -40,
           }}
         />
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 20px 0" }}>
+        <div style={{ maxWidth: 768, margin: "0 auto", padding: "10px 16px 0" }}>
           {sessionStartedAt && (
             <div style={{ textAlign: "center", padding: "16px 20px 10px", fontSize: 11, color: "#999" }}>
               {sessionCwd && <div style={{ marginBottom: 2 }}>{sessionCwd}</div>}

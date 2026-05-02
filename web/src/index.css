@@ -47,38 +47,38 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* Markdown prose — matches Claude.ai leading-[1.65rem] with gap-3 */
-.prose-chat { word-break: break-word; overflow-wrap: anywhere; max-width: 100%; overflow: hidden; }
-.prose-chat h1, .prose-chat h2, .prose-chat h3 { color: var(--text); font-weight: 700; margin: 20px 0 8px; }
+/* Markdown prose */
+.prose-chat { word-break: break-word; overflow-wrap: anywhere; max-width: 100%; overflow: hidden; line-height: 1.65rem; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { color: var(--text); font-weight: 700; margin: 20px 0 8px; padding-left: 8px; }
 .prose-chat h1 { font-size: 1.3em; }
 .prose-chat h2 { font-size: 1.15em; }
 .prose-chat h3 { font-size: 1.05em; }
-.prose-chat p { margin: 0 0 12px; line-height: 1.7; }
+.prose-chat p { margin: 0 0 12px; line-height: 1.7; padding-left: 8px; padding-right: 32px; }
 .prose-chat p:last-child { margin-bottom: 0; }
-.prose-chat ul, .prose-chat ol { margin: 0 0 12px; padding-left: 28px; }
-.prose-chat li { margin: 4px 0; padding-left: 4px; line-height: 1.7; }
+.prose-chat ul, .prose-chat ol { margin: 0 0 12px; padding-left: 32px; padding-right: 32px; }
+.prose-chat li { margin: 4px 0; padding-left: 8px; line-height: 1.7; }
 .prose-chat li::marker { color: var(--text-muted); }
-.prose-chat blockquote { border-left: 2px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 12px 0; }
+.prose-chat blockquote { border-left: 2px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 12px 0; padding-right: 32px; }
 .prose-chat a { color: var(--accent); text-decoration: none; }
 .prose-chat a:hover { text-decoration: underline; }
 .prose-chat strong { color: var(--text); font-weight: 700; }
 .prose-chat table { border-collapse: collapse; margin: 12px 0; width: 100%; font-size: 14px; }
 .prose-chat th, .prose-chat td { border: 1px solid var(--border); padding: 6px 12px; }
 .prose-chat th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 500; }
-.prose-chat hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+.prose-chat hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
 /* Code */
 .prose-chat pre {
-  background: var(--bg-surface) !important;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
   overflow-x: auto;
   max-width: 100%;
   margin: 8px 0;
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.625;
   white-space: pre-wrap;
   word-break: break-word;
 }
