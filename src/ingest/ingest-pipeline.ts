@@ -13,7 +13,7 @@ import EventEmitter from "eventemitter3";
 export interface PipelineEvents {
   "session:new": (sessionId: string) => void;
   "session:update": (sessionId: string) => void;
-  "message:new": (sessionId: string, uuid: string, role: string) => void;
+  "message:new": (sessionId: string, uuid: string, role: string, data?: any) => void;
   "tool:update": (sessionId: string, toolUseId: string) => void;
   error: (error: Error) => void;
 }
@@ -24,6 +24,7 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
   private knownSessions: Set<string> = new Set();
   private titledSessions: Set<string> = new Set();
   private queue: Promise<void> = Promise.resolve();
+  private flushQueue: Promise<void> = Promise.resolve();
 
   constructor(store: ConversationStore, watchPath?: string) {
     super();
@@ -50,6 +51,8 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
 
   async stop(): Promise<void> {
     await this.watcher.stop();
+    // Wait for all pending DB writes to flush
+    await this.flushQueue;
   }
 
   private async processLine(filePath: string, line: string, lineNumber: number): Promise<void> {
@@ -63,15 +66,87 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
     const projectPath = this.deriveProjectPath(filePath);
     const seq = lineNumber;
 
-    // Wrap all DB writes in a single ACID transaction
+    // ─── Parse data immediately for fast rendering ─────
+    let messageData: any = null;
+    let toolUses: any[] = [];
+    let toolResults: any[] = [];
+
+    if (event.type === "user" || event.type === "assistant") {
+      const message = (event.data as any).message;
+      if (!message) return;
+
+      const rawContent = message.content;
+      const contentBlocks = Array.isArray(rawContent) ? rawContent : [];
+      const textContent = typeof rawContent === "string" ? rawContent : extractTextContent(contentBlocks);
+      const thinking = extractThinking(contentBlocks);
+
+      messageData = {
+        sessionId,
+        uuid: event.uuid,
+        parentUuid: event.parentUuid,
+        role: event.type === "assistant" ? "assistant" : "user",
+        content: textContent || null,
+        contentBlocks,
+        thinking,
+        isSidechain: event.isSidechain,
+        isMeta: event.isMeta,
+        sequenceNum: seq,
+        timestamp: new Date(event.timestamp).toISOString(),
+        metadata: {},
+      };
+
+      if (event.type === "assistant") {
+        toolUses = extractToolUses(contentBlocks);
+      }
+      if (event.type === "user" && (event.data as any).toolUseResult) {
+        toolResults = extractToolResults(contentBlocks);
+      }
+    }
+
+    // ─── Emit events IMMEDIATELY for fast rendering ─────
+    if (isNewSession) {
+      this.knownSessions.add(sessionId);
+      this.emit("session:new", sessionId);
+    }
+
+    if (messageData) {
+      this.emit("message:new", sessionId, event.uuid, messageData.role, messageData);
+
+      for (const tr of toolResults) {
+        this.emit("tool:update", sessionId, tr.toolUseId);
+      }
+    }
+
+    if (event.type === "system") {
+      this.emit("session:update", sessionId);
+    }
+
+    // ─── Flush to DB asynchronously for data integrity ─────
+    this.flushQueue = this.flushQueue.then(() =>
+      this.flushToDB(event, sessionId, projectPath, seq, isNewSession, messageData, toolUses, toolResults).catch((err) => {
+        this.emit("error", err instanceof Error ? err : new Error(`DB flush failed: ${err}`));
+      })
+    );
+  }
+
+  private async flushToDB(
+    event: any,
+    sessionId: string,
+    projectPath: string,
+    seq: number,
+    isNewSession: boolean,
+    messageData: any,
+    toolUses: any[],
+    toolResults: any[],
+  ): Promise<void> {
     await this.store.transact(async (tx) => {
       // Store raw event
       await this.store.insertRawEvent({
         sessionId,
         eventType: event.type,
         data: event.data,
-        filePath,
-        lineNumber,
+        filePath: "",
+        lineNumber: seq,
       }, tx);
 
       // Ensure session exists
@@ -84,67 +159,52 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
           startedAt: new Date(event.timestamp),
           status: "active",
         }, tx);
-        this.knownSessions.add(sessionId);
       }
 
-      if (event.type === "user" || event.type === "assistant") {
-        const message = (event.data as any).message;
-        if (!message) return;
-
-        const rawContent = message.content;
-        const contentBlocks = Array.isArray(rawContent) ? rawContent : [];
-        const textContent = typeof rawContent === "string" ? rawContent : extractTextContent(contentBlocks);
-        const thinking = extractThinking(contentBlocks);
-
+      if (messageData) {
         // Auto-generate session title from first real user message
-        if (event.type === "user" && !this.titledSessions.has(sessionId) && textContent && !(event.data as any).toolUseResult) {
+        if (messageData.role === "user" && !this.titledSessions.has(sessionId) && messageData.content && !(event.data as any).toolUseResult) {
           this.titledSessions.add(sessionId);
           await this.store.upsertSession({
             id: sessionId,
             projectPath,
             startedAt: new Date(event.timestamp),
             status: "active",
-            title: textContent.slice(0, 100),
+            title: messageData.content.slice(0, 100),
           }, tx);
         }
 
         await this.store.insertMessage({
-          sessionId,
-          uuid: event.uuid,
-          parentUuid: event.parentUuid,
-          role: event.type === "assistant" ? "assistant" : "user",
-          content: textContent || null,
-          contentBlocks,
-          thinking,
-          isSidechain: event.isSidechain,
-          isMeta: event.isMeta,
-          sequenceNum: seq,
+          sessionId: messageData.sessionId,
+          uuid: messageData.uuid,
+          parentUuid: messageData.parentUuid,
+          role: messageData.role,
+          content: messageData.content,
+          contentBlocks: messageData.contentBlocks,
+          thinking: messageData.thinking,
+          isSidechain: messageData.isSidechain,
+          isMeta: messageData.isMeta,
+          sequenceNum: messageData.sequenceNum,
           timestamp: new Date(event.timestamp),
         }, tx);
 
-        // Extract tool_use blocks from assistant messages
-        if (event.type === "assistant") {
-          const toolUses = extractToolUses(contentBlocks);
-          for (const tu of toolUses) {
-            await this.store.insertToolCall({
-              sessionId,
-              messageUuid: event.uuid,
-              toolUseId: tu.id,
-              toolName: tu.name,
-              input: tu.input,
-              status: "pending",
-            }, tx);
-          }
+        // Insert tool_use blocks
+        for (const tu of toolUses) {
+          await this.store.insertToolCall({
+            sessionId,
+            messageUuid: messageData.uuid,
+            toolUseId: tu.id,
+            toolName: tu.name,
+            input: tu.input,
+            status: "pending",
+          }, tx);
         }
 
-        // Extract tool_result blocks from user messages — populate result_uuid
-        if (event.type === "user" && (event.data as any).toolUseResult) {
-          const results = extractToolResults(contentBlocks);
-          for (const tr of results) {
-            const error = tr.isError ? tr.output : null;
-            const output = tr.isError ? null : tr.output;
-            await this.store.completeToolCall(tr.toolUseId, output, error, event.uuid, tx);
-          }
+        // Complete tool_result blocks
+        for (const tr of toolResults) {
+          const error = tr.isError ? tr.output : null;
+          const output = tr.isError ? null : tr.output;
+          await this.store.completeToolCall(tr.toolUseId, output, error, messageData.uuid, tx);
         }
       }
 
@@ -169,25 +229,6 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
         }, tx);
       }
     });
-
-    // Emit events AFTER transaction commits successfully
-    if (isNewSession) this.emit("session:new", sessionId);
-
-    if (event.type === "user" || event.type === "assistant") {
-      this.emit("message:new", sessionId, event.uuid, event.type);
-
-      if (event.type === "user" && (event.data as any).toolUseResult) {
-        const contentBlocks = Array.isArray((event.data as any).message?.content) ? (event.data as any).message.content : [];
-        const results = extractToolResults(contentBlocks);
-        for (const tr of results) {
-          this.emit("tool:update", sessionId, tr.toolUseId);
-        }
-      }
-    }
-
-    if (event.type === "system") {
-      this.emit("session:update", sessionId);
-    }
   }
 
   private deriveProjectPath(filePath: string): string {

@@ -151,9 +151,18 @@ export function App() {
   }, [selectedId]);
 
   const refreshMessages = useCallback(
-    (data: { sessionId: string }) => {
+    (data: { sessionId: string; message?: api.Message }) => {
       if (data.sessionId === selectedId) {
-        api.getMessages(data.sessionId).then(setMessages).catch(console.error);
+        if (data.message) {
+          // Render immediately from SSE data — no DB round trip
+          setMessages((prev) => {
+            if (prev.some((m) => m.uuid === data.message!.uuid)) return prev;
+            return [...prev, data.message!];
+          });
+        } else {
+          // Fallback: fetch from DB
+          api.getMessages(data.sessionId).then(setMessages).catch(console.error);
+        }
       }
       refreshSessions();
     },

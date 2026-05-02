@@ -36,8 +36,8 @@ async function startAll() {
   const pipeline = new IngestPipeline(store);
   pipeline.on("session:new", (id) => sse.broadcast("session:new", { sessionId: id }));
   pipeline.on("session:update", (id) => sse.broadcast("session:update", { sessionId: id }, id));
-  pipeline.on("message:new", (sid, uuid, role) =>
-    sse.broadcast("message:new", { sessionId: sid, uuid, role }, sid)
+  pipeline.on("message:new", (sid, uuid, role, data) =>
+    sse.broadcast("message:new", { sessionId: sid, uuid, role, message: data }, sid)
   );
   pipeline.on("tool:update", (sid, toolId) =>
     sse.broadcast("tool:update", { sessionId: sid, toolUseId: toolId }, sid)

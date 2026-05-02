@@ -4,7 +4,7 @@ interface SSEOptions {
   sessionId?: string | null;
   onSessionNew?: (data: { sessionId: string }) => void;
   onSessionUpdate?: (data: { sessionId: string }) => void;
-  onMessageNew?: (data: { sessionId: string; uuid: string; role: string }) => void;
+  onMessageNew?: (data: { sessionId: string; uuid: string; role: string; message?: any }) => void;
   onToolUpdate?: (data: { sessionId: string; toolUseId: string }) => void;
 }
 
