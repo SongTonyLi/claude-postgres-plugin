@@ -226,31 +226,31 @@ function AttachmentBlock({ sessionId, messageUuid, blockIndex, mediaType }: { se
       <div
         onClick={() => setOpen(true)}
         style={{
-          margin: "6px 0",
-          borderRadius: 10,
+          margin: "4px 0",
+          borderRadius: 8,
           border: "1px solid #E5E5E2",
           background: "#FAFAF8",
           overflow: "hidden",
           cursor: "pointer",
           transition: "border-color 0.15s",
-          maxWidth: 320,
+          maxWidth: 80,
         }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E5E5E2"; }}
       >
         {isImage ? (
-          <img src={src} style={{ display: "block", maxWidth: "100%", maxHeight: 240, objectFit: "contain", borderRadius: "10px 10px 0 0" }} loading="lazy" />
+          <img src={src} style={{ display: "block", width: 80, height: 60, objectFit: "cover", borderRadius: "8px 8px 0 0" }} loading="lazy" />
         ) : (
-          <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 8 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ padding: 8, display: "flex", alignItems: "center", gap: 4 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
             </svg>
-            <span style={{ fontSize: 12, color: "#6B6B6B" }}>{isPdf ? "PDF Document" : mediaType}</span>
+            <span style={{ fontSize: 9, color: "#6B6B6B" }}>{isPdf ? "PDF" : mediaType}</span>
           </div>
         )}
-        <div style={{ padding: "4px 10px 6px", fontSize: 10, color: "#999" }}>
-          {isImage ? "Image" : isPdf ? "PDF" : "Document"} &middot; Click to view
+        <div style={{ padding: "2px 6px 3px", fontSize: 8, color: "#999", textAlign: "center" }}>
+          Click to view
         </div>
       </div>
       {open && <AttachmentViewer src={src} mediaType={mediaType} onClose={() => setOpen(false)} />}
