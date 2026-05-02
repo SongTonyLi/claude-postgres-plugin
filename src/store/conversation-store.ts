@@ -61,7 +61,7 @@ export class ConversationStore {
         ${session.endedAt ?? null},
         ${session.status},
         ${session.title ?? null},
-        ${JSON.stringify(session.metadata ?? {})}
+        ${sql.json(session.metadata ?? {})}
       )
       ON CONFLICT (id) DO UPDATE SET
         status = EXCLUDED.status,
@@ -117,13 +117,13 @@ export class ConversationStore {
         ${msg.parentUuid},
         ${msg.role},
         ${msg.content},
-        ${JSON.stringify(msg.contentBlocks)},
+        ${sql.json(msg.contentBlocks)},
         ${msg.thinking},
         ${msg.isSidechain},
         ${msg.isMeta},
         ${msg.sequenceNum},
         ${msg.timestamp},
-        ${JSON.stringify(msg.metadata ?? {})}
+        ${sql.json(msg.metadata ?? {})}
       )
       ON CONFLICT (session_id, uuid) DO NOTHING
     `;
@@ -159,7 +159,7 @@ export class ConversationStore {
         ${tool.messageUuid},
         ${tool.toolUseId},
         ${tool.toolName},
-        ${JSON.stringify(tool.input)},
+        ${sql.json(tool.input)},
         ${tool.status}
       )
       ON CONFLICT (tool_use_id) DO NOTHING
@@ -204,7 +204,7 @@ export class ConversationStore {
       VALUES (
         ${event.sessionId},
         ${event.eventType},
-        ${JSON.stringify(event.data)},
+        ${sql.json(event.data)},
         ${event.filePath ?? null},
         ${event.lineNumber ?? null}
       )
