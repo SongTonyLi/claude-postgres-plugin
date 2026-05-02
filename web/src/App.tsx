@@ -82,6 +82,7 @@ export function App() {
           toolCalls={toolCalls}
           sessionTitle={selectedSession?.title || null}
           sessionStatus={selectedSession?.status || "unknown"}
+          sessionCwd={selectedSession?.cwd || null}
           isLoading={isLoading}
         />
       ) : (

@@ -7,6 +7,7 @@ interface Props {
   toolCalls: ToolCall[];
   sessionTitle: string | null;
   sessionStatus: string;
+  sessionCwd: string | null;
   isLoading: boolean;
 }
 
@@ -15,20 +16,20 @@ export function ConversationView({
   toolCalls,
   sessionTitle,
   sessionStatus,
+  sessionCwd,
   isLoading,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Build tool call lookup map
   const toolMap = new Map<string, ToolCall>();
   for (const tc of toolCalls) {
     toolMap.set(tc.toolUseId, tc);
   }
 
-  // Count visible messages (skip meta and tool results)
-  const visibleCount = messages.filter(
-    (m) => !m.isMeta && !m.contentBlocks.some((b) => b.type === "tool_result")
+  const userMsgCount = messages.filter(
+    (m) => m.role === "user" && !m.isMeta && !m.contentBlocks.some((b) => b.type === "tool_result")
   ).length;
+  const assistantMsgCount = messages.filter((m) => m.role === "assistant" && !m.isMeta).length;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,9 +44,10 @@ export function ConversationView({
           alignItems: "center",
           justifyContent: "center",
           color: "var(--text-muted)",
+          background: "var(--bg-primary)",
         }}
       >
-        Loading conversation...
+        Loading...
       </div>
     );
   }
@@ -58,28 +60,42 @@ export function ConversationView({
         flexDirection: "column",
         height: "100vh",
         overflow: "hidden",
+        background: "var(--bg-primary)",
       }}
     >
-      {/* Header bar */}
+      {/* Terminal-like title bar */}
       <div
         style={{
-          padding: "12px 24px",
+          padding: "8px 24px",
           borderBottom: "1px solid var(--border)",
           background: "var(--bg-secondary)",
           display: "flex",
           alignItems: "center",
           gap: 12,
           flexShrink: 0,
+          fontSize: 12,
         }}
       >
-        <span style={{ fontWeight: 600, fontSize: 14 }}>
-          {sessionTitle || "Session"}
+        {/* Window control dots */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }} />
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }} />
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }} />
+        </div>
+
+        <span style={{ color: "var(--text-secondary)" }}>
+          claude
         </span>
+        <span style={{ color: "var(--text-muted)" }}>
+          {sessionCwd || "~"}
+        </span>
+
         <span
           style={{
+            marginLeft: "auto",
             padding: "2px 8px",
             borderRadius: 10,
-            fontSize: 11,
+            fontSize: 10,
             background:
               sessionStatus === "active" ? "rgba(63,185,80,0.15)" : "rgba(139,148,158,0.15)",
             color: sessionStatus === "active" ? "var(--accent-green)" : "var(--text-secondary)",
@@ -87,13 +103,24 @@ export function ConversationView({
         >
           {sessionStatus}
         </span>
-        <span style={{ color: "var(--text-muted)", marginLeft: "auto", fontSize: 12 }}>
-          {visibleCount} messages
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
+          {userMsgCount} prompts, {toolCalls.length} tools
         </span>
       </div>
 
-      {/* Message list */}
-      <div style={{ flex: 1, overflowY: "auto", background: "var(--bg-primary)" }}>
+      {/* Messages in terminal scroll area */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {/* Session start marker */}
+        <div
+          style={{
+            padding: "16px 24px 8px",
+            color: "var(--text-muted)",
+            fontSize: 11,
+          }}
+        >
+          Session started {new Date(messages[0]?.timestamp || "").toLocaleString()}
+        </div>
+
         {messages.map((msg) => (
           <MessageBubble
             key={msg.uuid}
@@ -119,7 +146,7 @@ export function ConversationView({
             No messages in this session
           </div>
         )}
-        <div ref={bottomRef} style={{ height: 40 }} />
+        <div ref={bottomRef} style={{ height: 24 }} />
       </div>
     </div>
   );
