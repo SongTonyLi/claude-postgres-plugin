@@ -470,6 +470,12 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
         {allText && (
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
             <CopyButton text={allText} />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#16a34a", fontSize: 11, fontFamily: "var(--font-sans)", opacity: 0.7 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Saved{hasAttachments ? " (incl. images)" : ""}
+            </span>
           </div>
         )}
       </div>
