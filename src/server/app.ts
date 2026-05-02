@@ -40,6 +40,17 @@ export function createApp(store: ConversationStore, sse: SSEManager): Hono {
     return c.json(results);
   });
 
+  // Hide/unhide session
+  app.post("/api/sessions/:id/hide", async (c) => {
+    await store.setSessionHidden(c.req.param("id"), true);
+    return c.json({ ok: true });
+  });
+
+  app.post("/api/sessions/:id/unhide", async (c) => {
+    await store.setSessionHidden(c.req.param("id"), false);
+    return c.json({ ok: true });
+  });
+
   // XML export of selected messages
   app.post("/api/sessions/:id/export-xml", async (c) => {
     const sessionId = c.req.param("id");

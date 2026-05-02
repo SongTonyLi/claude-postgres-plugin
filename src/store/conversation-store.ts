@@ -106,7 +106,7 @@ export class ConversationStore {
       SELECT s.*,
         (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id AND m.role != 'system' AND m.is_meta = false) as message_count,
         (SELECT COUNT(*) FROM tool_calls t WHERE t.session_id = s.id) as tool_count
-      FROM sessions s ORDER BY started_at DESC
+      FROM sessions s WHERE s.hidden = false ORDER BY started_at DESC
     `;
     return rows.map((r) => ({
       id: r.id,
@@ -242,6 +242,11 @@ export class ConversationStore {
       metadata: r.metadata,
       sessionTitle: r.session_title,
     }));
+  }
+
+  async setSessionHidden(id: string, hidden: boolean): Promise<void> {
+    const sql = getDb();
+    await sql`UPDATE sessions SET hidden = ${hidden} WHERE id = ${id}`;
   }
 
   async insertRawEvent(event: RawEventRecord, tx?: Sql): Promise<void> {

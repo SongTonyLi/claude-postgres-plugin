@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   ended_at TIMESTAMPTZ,
   status TEXT NOT NULL DEFAULT 'active',
   title TEXT,
+  hidden BOOLEAN DEFAULT FALSE,
   metadata JSONB DEFAULT '{}'
 );
 
