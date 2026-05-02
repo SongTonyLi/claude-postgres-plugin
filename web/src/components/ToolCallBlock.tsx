@@ -67,6 +67,19 @@ export function ToolCallBlock({ toolName, input, result }: Props) {
         )}
       </div>
 
+      {/* Inline output (always visible when available) */}
+      {!expanded && hasOutput && (
+        <div style={{ borderTop: "1px solid #E5E5E2", padding: "6px 12px" }}>
+          <pre style={{ margin: 0, fontSize: 11, color: fail ? "#dc2626" : "#6B6B6B", whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.4, maxHeight: 120, overflowY: "auto" }}>
+            {(() => {
+              const text = result?.error || result?.output || "";
+              return text.length > 1000 ? text.slice(0, 1000) + "\n... (click to expand)" : text;
+            })()}
+          </pre>
+        </div>
+      )}
+
+      {/* Full expanded view */}
       {expanded && (
         <div style={{ borderTop: "1px solid #E5E5E2" }}>
           <div style={{ padding: "8px 12px" }}>

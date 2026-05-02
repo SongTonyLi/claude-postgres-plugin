@@ -300,51 +300,8 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   const isUser = role === "user";
   const isToolResult = contentBlocks.some((b) => b.type === "tool_result");
 
-  // ─── Tool result messages ─────
-  if (isToolResult) {
-    return (
-      <div className="fade-up" style={{ padding: "2px 20px 2px 20px" }}>
-        {contentBlocks.map((block, i) => {
-          if (block.type !== "tool_result") return null;
-          const resultContent =
-            typeof block.content === "string"
-              ? block.content
-              : Array.isArray(block.content)
-                ? (block.content as any[])
-                    .filter((c: any) => c.type === "text")
-                    .map((c: any) => c.text)
-                    .join("\n")
-                : "";
-          if (!resultContent) return null;
-
-          return (
-            <div
-              key={i}
-              style={{
-                background: block.is_error ? "rgba(220, 38, 38, 0.04)" : "#F5F5F0",
-                border: `1px solid ${block.is_error ? "rgba(220, 38, 38, 0.15)" : "#E5E5E2"}`,
-                borderRadius: 8,
-                padding: "6px 10px",
-                fontSize: 12,
-                fontFamily: "'JetBrains Mono', monospace",
-                color: block.is_error ? "#dc2626" : "#6B6B6B",
-                maxHeight: 200,
-                overflowY: "auto",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                lineHeight: 1.5,
-                marginBottom: 4,
-              }}
-            >
-              {resultContent.length > 2000
-                ? resultContent.slice(0, 2000) + "\n... (truncated)"
-                : resultContent}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
+  // ─── Tool result messages: hidden (output shown inline in ToolCallBlock) ─────
+  if (isToolResult) return null;
 
   // ─── User message: right-aligned bubble, sans-serif ─────
   if (isUser) {
