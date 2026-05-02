@@ -14,8 +14,11 @@ interface Props {
   toolCalls: Map<string, ToolCall>;
 }
 
-export function MessageBubble({ role, content, contentBlocks, thinking, isMeta, toolCalls }: Props) {
+export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls }: Props) {
   if (isMeta) return null;
+
+  // Safety: handle contentBlocks being a string (old data or raw string content)
+  const contentBlocks: ContentBlock[] = Array.isArray(rawBlocks) ? rawBlocks : [];
 
   // System compaction marker
   if (role === "system") {

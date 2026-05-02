@@ -87,8 +87,10 @@ export class IngestPipeline extends EventEmitter<PipelineEvents> {
       const message = (event.data as any).message;
       if (!message) return;
 
-      const contentBlocks = message.content || [];
-      const textContent = extractTextContent(contentBlocks);
+      // message.content can be an array of blocks OR a raw string
+      const rawContent = message.content;
+      const contentBlocks = Array.isArray(rawContent) ? rawContent : [];
+      const textContent = typeof rawContent === "string" ? rawContent : extractTextContent(contentBlocks);
       const thinking = extractThinking(contentBlocks);
 
       // Auto-generate session title from first real user message
