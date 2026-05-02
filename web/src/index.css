@@ -33,9 +33,11 @@ html, body, #root { margin: 0; padding: 0; height: 100%; overflow: hidden; }
 body {
   background: var(--bg-base);
   color: var(--text);
-  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   font-size: 16px;
   line-height: 1.7;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

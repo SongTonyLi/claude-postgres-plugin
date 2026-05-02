@@ -15,19 +15,6 @@ interface Props {
   toolCalls: Map<string, ToolCall>;
 }
 
-function ClaudeLogo({ size = 24 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 2L12.9 8.1M12 22L12.9 15.9M2 12L8.1 12.9M22 12L15.9 12.9M4.93 4.93L9.17 9.17M19.07 19.07L14.83 14.83M4.93 19.07L9.17 14.83M19.07 4.93L14.83 9.17"
-        stroke="#D97706"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -54,7 +41,7 @@ function CopyButton({ text }: { text: string }) {
         gap: 4,
         transition: "all 0.15s",
         fontSize: 12,
-        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
       onMouseEnter={(e) => { if (!copied) { e.currentTarget.style.color = "#6B6B6B"; e.currentTarget.style.background = "#F0F0EC"; } }}
       onMouseLeave={(e) => { if (!copied) { e.currentTarget.style.color = "#999"; e.currentTarget.style.background = "none"; } }}
@@ -79,10 +66,63 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function UserMessageContent({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const maxHeight = 200;
+  const isLong = text.length > 600;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div
+        style={{
+          maxHeight: !expanded && isLong ? maxHeight : "none",
+          overflow: "hidden",
+          position: "relative",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{text}</div>
+        {!expanded && isLong && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 48,
+              background: "linear-gradient(to top, #F0F0EC 0%, transparent 100%)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+      </div>
+      {isLong && !expanded && (
+        <button
+          onClick={() => setExpanded(true)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "rgba(107, 107, 107, 0.8)",
+            cursor: "pointer",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            padding: "4px 0 12px",
+            textAlign: "left",
+            width: "75%",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#1A1A1A")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(107, 107, 107, 0.8)")}
+        >
+          Show more
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls }: Props) {
   if (isMeta) return null;
 
-  // Safety: handle contentBlocks being a string (old data or raw string content)
   const contentBlocks: ContentBlock[] = Array.isArray(rawBlocks) ? rawBlocks : [];
 
   // System compaction marker
@@ -96,6 +136,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
             background: "rgba(202, 138, 4, 0.06)",
             padding: "3px 10px",
             borderRadius: 8,
+            fontFamily: "var(--font-sans)",
           }}
         >
           {content || "context compacted"}
@@ -107,7 +148,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   const isUser = role === "user";
   const isToolResult = contentBlocks.some((b) => b.type === "tool_result");
 
-  // ─── Tool result messages: show inline with output ─────
+  // ─── Tool result messages ─────
   if (isToolResult) {
     return (
       <div className="fade-up" style={{ padding: "2px 20px 2px 20px" }}>
@@ -153,7 +194,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
     );
   }
 
-  // ─── User message: full-width warm gray block ─────
+  // ─── User message: right-aligned bubble, sans-serif ─────
   if (isUser) {
     const text =
       contentBlocks
@@ -164,20 +205,19 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
     if (!text.trim()) return null;
 
     return (
-      <div className="fade-up" style={{ padding: "8px 0" }}>
+      <div className="fade-up" style={{ padding: "8px 20px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
         <div
           style={{
-            background: "#F5F5F0",
-            borderRadius: 20,
-            padding: "16px 24px",
-            lineHeight: 1.7,
+            maxWidth: "85%",
+            background: "#F0F0EC",
+            borderRadius: "16px",
+            padding: "10px 16px",
+            lineHeight: 1.6,
             color: "#1A1A1A",
+            fontFamily: "var(--font-sans)",
           }}
-          className="prose-chat"
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-            {text}
-          </ReactMarkdown>
+          <UserMessageContent text={text} />
         </div>
       </div>
     );
@@ -188,22 +228,21 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   const hasTools = contentBlocks.some((b) => b.type === "tool_use");
   if (!hasText && !hasTools && !thinking && !content) return null;
 
-  // Collect all text for copy button
   const allText = contentBlocks
     .filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text" && !!(b as any).text)
     .map((b) => b.text)
     .join("\n") || content || "";
 
-  // ─── Assistant message: clean layout with copy + logo ─────
+  // ─── Assistant message: serif font, copy button, Claude logo ─────
   return (
-    <div className="fade-up" style={{ padding: "8px 0" }}>
-      <div style={{ minWidth: 0 }}>
+    <div className="fade-up" style={{ padding: "12px 20px" }}>
+      <div style={{ minWidth: 0, fontFamily: "var(--font-serif)", lineHeight: "1.65rem" }}>
         {thinking && <ThinkingBlock content={thinking} />}
 
         {contentBlocks.map((block, i) => {
           if (block.type === "text" && block.text) {
             return (
-              <div key={i} className="prose-chat">
+              <div key={i} className="prose-chat" style={{ fontFamily: "var(--font-serif)" }}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
                   {block.text}
                 </ReactMarkdown>
@@ -224,14 +263,13 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
         })}
 
         {contentBlocks.length === 0 && content && (
-          <div className="prose-chat">
+          <div className="prose-chat" style={{ fontFamily: "var(--font-serif)" }}>
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
               {content}
             </ReactMarkdown>
           </div>
         )}
 
-        {/* Copy button + Claude logo */}
         {hasText && (
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
             <CopyButton text={allText} />
