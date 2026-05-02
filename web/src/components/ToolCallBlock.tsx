@@ -18,8 +18,8 @@ export function ToolCallBlock({ toolName, input, result }: Props) {
       style={{
         margin: "6px 0",
         borderRadius: 12,
-        border: "1px solid #333",
-        background: "#1e1e1e",
+        border: "1px solid #E5E5E2",
+        background: "#FAFAF8",
         overflow: "hidden",
       }}
     >
@@ -35,38 +35,38 @@ export function ToolCallBlock({ toolName, input, result }: Props) {
           fontSize: 13,
         }}
       >
-        <span style={{ fontSize: 8, color: "#666", transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.1s", display: "inline-block" }}>
+        <span style={{ fontSize: 8, color: "#999", transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.1s", display: "inline-block" }}>
           {"\u25B6"}
         </span>
-        <span style={{ fontWeight: 600, color: "#06b6d4", fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{toolName}</span>
-        <span style={{ flex: 1, color: "#555", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'JetBrains Mono', monospace" }}>
+        <span style={{ fontWeight: 600, color: "#0891b2", fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{toolName}</span>
+        <span style={{ flex: 1, color: "#999", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'JetBrains Mono', monospace" }}>
           {summary}
         </span>
-        <span style={{ color: ok ? "#22c55e" : fail ? "#ef4444" : "#eab308", fontSize: 12 }}>
+        <span style={{ color: ok ? "#16a34a" : fail ? "#dc2626" : "#ca8a04", fontSize: 12 }}>
           {ok ? "\u2713" : fail ? "\u2717" : "\u2022"}
         </span>
       </div>
 
       {expanded && (
-        <div style={{ borderTop: "1px solid #333" }}>
+        <div style={{ borderTop: "1px solid #E5E5E2" }}>
           <div style={{ padding: "8px 12px" }}>
-            <div style={{ fontSize: 10, color: "#666", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Input</div>
-            <pre style={{ margin: 0, fontSize: 12, color: "#a1a1a1", whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#171717", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5, maxHeight: 200, overflowY: "auto" }}>
+            <div style={{ fontSize: 10, color: "#999", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Input</div>
+            <pre style={{ margin: 0, fontSize: 12, color: "#6B6B6B", whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#F5F5F0", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5, maxHeight: 200, overflowY: "auto" }}>
               {formatInput(toolName, input)}
             </pre>
           </div>
           {result?.output && (
             <div style={{ padding: "0 12px 8px" }}>
-              <div style={{ fontSize: 10, color: "#666", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Output</div>
-              <pre style={{ margin: 0, fontSize: 12, color: "#a1a1a1", whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#171717", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5, maxHeight: 350, overflowY: "auto" }}>
+              <div style={{ fontSize: 10, color: "#999", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Output</div>
+              <pre style={{ margin: 0, fontSize: 12, color: "#6B6B6B", whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#F5F5F0", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5, maxHeight: 350, overflowY: "auto" }}>
                 {result.output.length > 4000 ? result.output.slice(0, 4000) + "\n\n--- truncated ---" : result.output}
               </pre>
             </div>
           )}
           {result?.error && (
             <div style={{ padding: "0 12px 8px" }}>
-              <div style={{ fontSize: 10, color: "#ef4444", marginBottom: 4, fontWeight: 600, textTransform: "uppercase" }}>Error</div>
-              <pre style={{ margin: 0, fontSize: 12, color: "#ef4444", whiteSpace: "pre-wrap", background: "rgba(239,68,68,0.06)", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ fontSize: 10, color: "#dc2626", marginBottom: 4, fontWeight: 600, textTransform: "uppercase" }}>Error</div>
+              <pre style={{ margin: 0, fontSize: 12, color: "#dc2626", whiteSpace: "pre-wrap", background: "rgba(220,38,38,0.04)", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace" }}>
                 {result.error}
               </pre>
             </div>

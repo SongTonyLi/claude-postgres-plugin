@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import type { Session } from "../api/client";
-import { hideSession } from "../api/client";
 
 interface Props {
   sessions: Session[];
@@ -31,10 +30,10 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
       {/* Header */}
       <div style={{ padding: "14px 14px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#a1a1a1" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#6B6B6B" }}>
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Sessions</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>Sessions</span>
         </div>
 
         {/* Global search bar */}
@@ -44,8 +43,8 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
             width: "100%",
             padding: "7px 12px",
             borderRadius: 10,
-            background: "#262626",
-            color: "#666",
+            background: "#EAEAE6",
+            color: "#999",
             fontSize: 12,
             cursor: "pointer",
             display: "flex",
@@ -58,7 +57,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           Search all conversations
-          <kbd style={{ marginLeft: "auto", padding: "1px 4px", borderRadius: 3, background: "#333", border: "1px solid #444", fontSize: 10 }}>{"\u2318"}K</kbd>
+          <kbd style={{ marginLeft: "auto", padding: "1px 4px", borderRadius: 3, background: "#E2E2DE", border: "1px solid #D5D5D2", fontSize: 10, color: "#999" }}>{"\u2318"}K</kbd>
         </div>
 
         {/* Local filter */}
@@ -70,10 +69,10 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
           style={{
             width: "100%",
             padding: "5px 10px",
-            border: "1px solid #333",
+            border: "1px solid #E5E5E2",
             borderRadius: 8,
             background: "transparent",
-            color: "#eee",
+            color: "#1A1A1A",
             fontFamily: "inherit",
             fontSize: 11,
             outline: "none",
@@ -90,7 +89,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
                 padding: "10px 8px 4px",
                 fontSize: 11,
                 fontWeight: 600,
-                color: "#666",
+                color: "#999",
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
               }}
@@ -107,12 +106,12 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
                     padding: "8px 10px",
                     borderRadius: 10,
                     cursor: "pointer",
-                    background: sel ? "#2e2e2e" : "transparent",
+                    background: sel ? "#E8E8E5" : "transparent",
                     transition: "background 0.1s",
                     marginBottom: 1,
                   }}
                   onMouseEnter={(e) => {
-                    if (!sel) e.currentTarget.style.background = "#262626";
+                    if (!sel) e.currentTarget.style.background = "#EAEAE6";
                   }}
                   onMouseLeave={(e) => {
                     if (!sel) e.currentTarget.style.background = "transparent";
@@ -123,7 +122,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
                       style={{
                         flex: 1,
                         fontSize: 13,
-                        color: sel ? "#eee" : "#a1a1a1",
+                        color: sel ? "#1A1A1A" : "#6B6B6B",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -139,7 +138,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
                       style={{
                         background: "none",
                         border: "none",
-                        color: "#555",
+                        color: "#CCC",
                         cursor: "pointer",
                         padding: 2,
                         borderRadius: 4,
@@ -153,7 +152,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
                       </svg>
                     </button>
                   </div>
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>
                     {projectName(s.projectPath)}
                     {s.messageCount != null && s.messageCount > 0 && ` \u00B7 ${s.messageCount} msgs`}
                   </div>
@@ -163,7 +162,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
           </div>
         ))}
         {filtered.length === 0 && (
-          <div style={{ padding: 24, textAlign: "center", color: "#666", fontSize: 13 }}>
+          <div style={{ padding: 24, textAlign: "center", color: "#999", fontSize: 13 }}>
             {search ? "No matches" : "No sessions yet"}
           </div>
         )}
@@ -173,7 +172,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
       <div
         style={{
           padding: "10px 14px",
-          borderTop: "1px solid #2a2a2a",
+          borderTop: "1px solid #E5E5E2",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -196,16 +195,16 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
           U
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 500 }}>Local</div>
-          <div style={{ fontSize: 10, color: "#666" }}>PostgreSQL</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: "#1A1A1A" }}>Local</div>
+          <div style={{ fontSize: 10, color: "#999" }}>PostgreSQL</div>
         </div>
         <span
           style={{
             width: 6,
             height: 6,
             borderRadius: "50%",
-            background: isConnected ? "#22c55e" : "#ef4444",
-            boxShadow: isConnected ? "0 0 6px #22c55e" : "none",
+            background: isConnected ? "#16a34a" : "#dc2626",
+            boxShadow: isConnected ? "0 0 6px rgba(22, 163, 74, 0.4)" : "none",
           }}
         />
       </div>
@@ -214,14 +213,14 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
         .sidebar {
           width: 280px;
           min-width: 280px;
-          background: #1e1e1e;
+          background: #F5F4F2;
           display: flex;
           flex-direction: column;
           height: 100vh;
-          border-right: 1px solid #2a2a2a;
+          border-right: 1px solid #E5E5E2;
         }
         .sidebar div:hover > div > .hide-btn { display: block !important; }
-        .hide-btn:hover { color: #ef4444 !important; }
+        .hide-btn:hover { color: #dc2626 !important; }
       `}</style>
     </div>
   );

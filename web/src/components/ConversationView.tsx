@@ -45,7 +45,6 @@ export function ConversationView({
   // Scroll to highlighted message and glow for 10s
   useEffect(() => {
     if (!highlightUuid || messages.length === 0) return;
-    // Wait a tick for refs to be set after messages load
     const raf = requestAnimationFrame(() => {
       const el = msgRefs.current.get(highlightUuid);
       if (el) {
@@ -87,7 +86,6 @@ export function ConversationView({
   const handleExport = useCallback(async () => {
     const uuids = Array.from(selected);
     const xml = await exportXml(sessionId, uuids);
-    // Download as file
     const blob = new Blob([xml], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -99,14 +97,14 @@ export function ConversationView({
 
   if (isLoading) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#171717", color: "#666" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#F9F8F6", color: "#999" }}>
         Loading...
       </div>
     );
   }
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", background: "#171717" }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", background: "#F9F8F6" }}>
       {/* Top navbar */}
       <div
         style={{
@@ -114,13 +112,18 @@ export function ConversationView({
           display: "flex",
           alignItems: "center",
           gap: 10,
-          borderBottom: "1px solid #2a2a2a",
-          background: "#1e1e1e",
+          borderBottom: "1px solid #E5E5E2",
+          background: "#FFFFFF",
           flexShrink: 0,
         }}
       >
-        <span style={{ fontWeight: 600, fontSize: 14 }}>Claude</span>
-        <span style={{ color: "#555", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ fontWeight: 600, fontSize: 14, color: "#1A1A1A" }}>
+          {sessionTitle || "Claude"}
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+        <span style={{ color: "#999", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {sessionCwd || ""}
         </span>
         <span
@@ -128,21 +131,21 @@ export function ConversationView({
             padding: "2px 8px",
             borderRadius: 6,
             fontSize: 11,
-            background: sessionStatus === "active" ? "rgba(34, 197, 94, 0.1)" : "rgba(102, 102, 102, 0.15)",
-            color: sessionStatus === "active" ? "#22c55e" : "#666",
+            background: sessionStatus === "active" ? "rgba(22, 163, 74, 0.08)" : "rgba(153, 153, 153, 0.1)",
+            color: sessionStatus === "active" ? "#16a34a" : "#999",
           }}
         >
           {sessionStatus}
         </span>
-        <span style={{ fontSize: 11, color: "#555" }}>{toolCalls.length} tools</span>
+        <span style={{ fontSize: 11, color: "#999" }}>{toolCalls.length} tools</span>
 
         {/* Select toggle */}
         <button
           onClick={() => { setSelectMode(!selectMode); if (selectMode) setSelected(new Set()); }}
           style={{
-            background: selectMode ? "rgba(59, 130, 246, 0.15)" : "#262626",
-            border: selectMode ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid #333",
-            color: selectMode ? "#3b82f6" : "#a1a1a1",
+            background: selectMode ? "rgba(59, 130, 246, 0.08)" : "#F5F5F0",
+            border: selectMode ? "1px solid rgba(59, 130, 246, 0.2)" : "1px solid #E5E5E2",
+            color: selectMode ? "#3b82f6" : "#6B6B6B",
             padding: "4px 10px",
             borderRadius: 6,
             cursor: "pointer",
@@ -159,8 +162,8 @@ export function ConversationView({
         <div
           style={{
             padding: "6px 20px",
-            background: "#1a1a2e",
-            borderBottom: "1px solid #2a2a4a",
+            background: "#F0F0FF",
+            borderBottom: "1px solid #E0E0F0",
             display: "flex",
             alignItems: "center",
             gap: 8,
@@ -169,13 +172,13 @@ export function ConversationView({
         >
           <button
             onClick={selectAll}
-            style={{ background: "none", border: "1px solid #333", color: "#a1a1a1", padding: "3px 8px", borderRadius: 5, cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}
+            style={{ background: "none", border: "1px solid #E5E5E2", color: "#6B6B6B", padding: "3px 8px", borderRadius: 5, cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}
           >
             Select All
           </button>
           <button
             onClick={() => setSelected(new Set())}
-            style={{ background: "none", border: "1px solid #333", color: "#a1a1a1", padding: "3px 8px", borderRadius: 5, cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}
+            style={{ background: "none", border: "1px solid #E5E5E2", color: "#6B6B6B", padding: "3px 8px", borderRadius: 5, cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}
           >
             Clear
           </button>
@@ -184,9 +187,9 @@ export function ConversationView({
             onClick={handleExport}
             disabled={selected.size === 0}
             style={{
-              background: selected.size > 0 ? "#3b82f6" : "#333",
+              background: selected.size > 0 ? "#3b82f6" : "#E5E5E2",
               border: "none",
-              color: selected.size > 0 ? "#fff" : "#666",
+              color: selected.size > 0 ? "#fff" : "#999",
               padding: "5px 14px",
               borderRadius: 6,
               cursor: selected.size > 0 ? "pointer" : "default",
@@ -200,11 +203,25 @@ export function ConversationView({
         </div>
       )}
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 0 0" }}>
+      {/* Messages with top fade overlay */}
+      <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+        {/* Fade overlay at top */}
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 40,
+            background: "linear-gradient(to bottom, #F9F8F6 0%, rgba(249, 248, 246, 0) 100%)",
+            pointerEvents: "none",
+            zIndex: 2,
+            marginBottom: -40,
+          }}
+        />
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 20px 0" }}>
           {sessionStartedAt && (
-            <div style={{ textAlign: "center", padding: "16px 20px 10px", fontSize: 11, color: "#555" }}>
+            <div style={{ textAlign: "center", padding: "16px 20px 10px", fontSize: 11, color: "#999" }}>
               {sessionCwd && <div style={{ marginBottom: 2 }}>{sessionCwd}</div>}
               {new Date(sessionStartedAt).toLocaleString("en-US", {
                 weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
@@ -228,9 +245,9 @@ export function ConversationView({
                   alignItems: "flex-start",
                   position: "relative",
                   background: isGlowing
-                    ? "rgba(59, 130, 246, 0.12)"
+                    ? "rgba(59, 130, 246, 0.06)"
                     : isSelected
-                      ? "rgba(59, 130, 246, 0.06)"
+                      ? "rgba(59, 130, 246, 0.04)"
                       : "transparent",
                   transition: "background 0.5s ease",
                   borderLeft: isGlowing ? "3px solid #3b82f6" : "3px solid transparent",
@@ -242,11 +259,11 @@ export function ConversationView({
                     style={{
                       position: "absolute",
                       left: 4,
-                      top: msg.role === "user" ? 14 : 14,
+                      top: 14,
                       width: 18,
                       height: 18,
                       borderRadius: 4,
-                      border: isSelected ? "2px solid #3b82f6" : "2px solid #444",
+                      border: isSelected ? "2px solid #3b82f6" : "2px solid #CCC",
                       background: isSelected ? "#3b82f6" : "transparent",
                       cursor: "pointer",
                       display: "flex",
@@ -277,8 +294,22 @@ export function ConversationView({
             );
           })}
 
+          {/* Claude logo at bottom */}
+          {messages.length > 0 && (
+            <div style={{ display: "flex", justifyContent: "flex-start", padding: "16px 0 8px" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2L12.9 8.1M12 22L12.9 15.9M2 12L8.1 12.9M22 12L15.9 12.9M4.93 4.93L9.17 9.17M19.07 19.07L14.83 14.83M4.93 19.07L9.17 14.83M19.07 4.93L14.83 9.17"
+                  stroke="#D97706"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+          )}
+
           {messages.length === 0 && (
-            <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 13 }}>
+            <div style={{ padding: 40, textAlign: "center", color: "#999", fontSize: 13 }}>
               Empty session
             </div>
           )}

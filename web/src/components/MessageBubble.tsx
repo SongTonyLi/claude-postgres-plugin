@@ -1,3 +1,4 @@
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -14,6 +15,62 @@ interface Props {
   toolCalls: Map<string, ToolCall>;
 }
 
+function ClaudeLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 2L12.9 8.1M12 22L12.9 15.9M2 12L8.1 12.9M22 12L15.9 12.9M4.93 4.93L9.17 9.17M19.07 19.07L14.83 14.83M4.93 19.07L9.17 14.83M19.07 4.93L14.83 9.17"
+        stroke="#D97706"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      title="Copy message"
+      style={{
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: 4,
+        borderRadius: 6,
+        color: copied ? "#16a34a" : "#999",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "color 0.15s",
+      }}
+      onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = "#6B6B6B"; }}
+      onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = "#999"; }}
+    >
+      {copied ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinking, isMeta, toolCalls }: Props) {
   if (isMeta) return null;
 
@@ -27,8 +84,8 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
         <span
           style={{
             fontSize: 11,
-            color: "#eab308",
-            background: "rgba(234, 179, 8, 0.08)",
+            color: "#ca8a04",
+            background: "rgba(202, 138, 4, 0.06)",
             padding: "3px 10px",
             borderRadius: 8,
           }}
@@ -45,7 +102,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   // ─── Tool result messages: show inline with output ─────
   if (isToolResult) {
     return (
-      <div className="fade-up" style={{ padding: "2px 20px 2px 64px" }}>
+      <div className="fade-up" style={{ padding: "2px 20px 2px 20px" }}>
         {contentBlocks.map((block, i) => {
           if (block.type !== "tool_result") return null;
           const resultContent =
@@ -63,13 +120,13 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
             <div
               key={i}
               style={{
-                background: block.is_error ? "rgba(239, 68, 68, 0.06)" : "#1a1a1a",
-                border: `1px solid ${block.is_error ? "rgba(239, 68, 68, 0.2)" : "#2a2a2a"}`,
+                background: block.is_error ? "rgba(220, 38, 38, 0.04)" : "#F5F5F0",
+                border: `1px solid ${block.is_error ? "rgba(220, 38, 38, 0.15)" : "#E5E5E2"}`,
                 borderRadius: 8,
                 padding: "6px 10px",
                 fontSize: 12,
                 fontFamily: "'JetBrains Mono', monospace",
-                color: block.is_error ? "#ef4444" : "#888",
+                color: block.is_error ? "#dc2626" : "#6B6B6B",
                 maxHeight: 200,
                 overflowY: "auto",
                 whiteSpace: "pre-wrap",
@@ -88,7 +145,7 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
     );
   }
 
-  // ─── User message: right-aligned bubble ─────
+  // ─── User message: full-width warm gray block ─────
   if (isUser) {
     const text =
       contentBlocks
@@ -97,20 +154,21 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
         .join("\n") || content || "";
 
     return (
-      <div className="fade-up" style={{ padding: "8px 20px", display: "flex", justifyContent: "flex-end" }}>
+      <div className="fade-up" style={{ padding: "8px 0" }}>
         <div
           style={{
-            maxWidth: "85%",
-            background: "#2a2a2a",
-            borderRadius: "20px 20px 4px 20px",
-            padding: "10px 16px",
+            background: "#F5F5F0",
+            borderRadius: 20,
+            padding: "16px 24px",
             fontSize: 14,
             lineHeight: 1.6,
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
+            color: "#1A1A1A",
           }}
+          className="prose-chat"
         >
-          {text}
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+            {text}
+          </ReactMarkdown>
         </div>
       </div>
     );
@@ -121,32 +179,16 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   const hasTools = contentBlocks.some((b) => b.type === "tool_use");
   if (!hasText && !hasTools && !thinking && !content) return null;
 
-  // ─── Assistant message: left-aligned with avatar ─────
+  // Collect all text for copy button
+  const allText = contentBlocks
+    .filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text" && !!(b as any).text)
+    .map((b) => b.text)
+    .join("\n") || content || "";
+
+  // ─── Assistant message: clean layout with copy + logo ─────
   return (
-    <div className="fade-up" style={{ padding: "8px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-      {/* Avatar */}
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 8,
-          background: "linear-gradient(135deg, #d97706, #f59e0b)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          marginTop: 2,
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-      </div>
-
-      {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#a1a1a1", marginBottom: 4 }}>Claude</div>
-
+    <div className="fade-up" style={{ padding: "8px 0" }}>
+      <div style={{ minWidth: 0 }}>
         {thinking && <ThinkingBlock content={thinking} />}
 
         {contentBlocks.map((block, i) => {
@@ -177,6 +219,13 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
               {content}
             </ReactMarkdown>
+          </div>
+        )}
+
+        {/* Copy button + Claude logo */}
+        {hasText && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
+            <CopyButton text={allText} />
           </div>
         )}
       </div>
