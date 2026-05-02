@@ -298,10 +298,12 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
   }
 
   const isUser = role === "user";
-  const isToolResult = contentBlocks.some((b) => b.type === "tool_result");
+  const isToolResultOnly = isUser
+    && contentBlocks.length > 0
+    && contentBlocks.every((b) => b.type === "tool_result");
 
-  // ─── Tool result messages: hidden (output shown inline in ToolCallBlock) ─────
-  if (isToolResult) return null;
+  // ─── Tool-result-only user messages: hidden (output shown inline in ToolCallBlock) ─────
+  if (isToolResultOnly) return null;
 
   // ─── User message: right-aligned bubble, sans-serif ─────
   if (isUser) {
@@ -383,11 +385,36 @@ export function MessageBubble({ role, content, contentBlocks: rawBlocks, thinkin
     return parts.join("\n\n") || content || "";
   })();
 
+  // Generate tool call summary
+  const toolSummary = (() => {
+    const tools = contentBlocks.filter((b) => b.type === "tool_use") as Array<{ type: "tool_use"; name: string; input: unknown }>;
+    if (tools.length === 0) return null;
+    const counts: Record<string, number> = {};
+    for (const t of tools) counts[t.name] = (counts[t.name] || 0) + 1;
+    const parts: string[] = [];
+    if (counts.Grep) parts.push(`${counts.Grep} pattern${counts.Grep > 1 ? "s" : ""} searched`);
+    if (counts.Glob) parts.push(`${counts.Glob} glob${counts.Glob > 1 ? "s" : ""} matched`);
+    if (counts.Read) parts.push(`${counts.Read} file${counts.Read > 1 ? "s" : ""} read`);
+    if (counts.Edit) parts.push(`${counts.Edit} file${counts.Edit > 1 ? "s" : ""} edited`);
+    if (counts.Write) parts.push(`${counts.Write} file${counts.Write > 1 ? "s" : ""} written`);
+    if (counts.Bash) parts.push(`${counts.Bash} command${counts.Bash > 1 ? "s" : ""} run`);
+    if (counts.Agent) parts.push(`${counts.Agent} agent${counts.Agent > 1 ? "s" : ""} dispatched`);
+    const other = Object.entries(counts).filter(([n]) => !["Grep","Glob","Read","Edit","Write","Bash","Agent"].includes(n));
+    for (const [name, count] of other) parts.push(`${count} ${name}`);
+    return parts.length > 0 ? parts.join(", ") : `${tools.length} tool call${tools.length > 1 ? "s" : ""}`;
+  })();
+
   // ─── Assistant message: serif font, copy button ─────
   return (
     <div className="fade-up" style={{ padding: "12px 4px" }}>
       <div style={{ minWidth: 0, fontFamily: "var(--font-serif)", lineHeight: "1.65rem" }}>
         {thinking && <ThinkingBlock content={thinking} />}
+
+        {toolSummary && (
+          <div style={{ fontSize: 11, color: "#999", fontFamily: "var(--font-sans)", padding: "0 8px 4px", letterSpacing: "0.01em" }}>
+            {toolSummary}
+          </div>
+        )}
 
         {contentBlocks.map((block, i) => {
           if (block.type === "text" && block.text) {
