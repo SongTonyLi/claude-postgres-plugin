@@ -1,4 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+
+const SPINNER_VERBS = [
+  "Accomplishing", "Architecting", "Baking", "Beaming", "Beboppin'",
+  "Blanching", "Boogieing", "Boondoggling", "Brewing", "Calculating",
+  "Caramelizing", "Cascading", "Cerebrating", "Channeling", "Churning",
+  "Clauding", "Cogitating", "Combobulating", "Composing", "Computing",
+  "Concocting", "Considering", "Contemplating", "Cooking", "Crafting",
+  "Crunching", "Crystallizing", "Cultivating", "Deliberating",
+  "Dilly-dallying", "Doodling", "Drizzling", "Elucidating",
+  "Enchanting", "Envisioning", "Fermenting", "Finagling", "Flambéing",
+  "Flowing", "Forging", "Frolicking", "Gallivanting", "Garnishing",
+  "Generating", "Germinating", "Grooving", "Harmonizing", "Hatching",
+  "Hullaballooing", "Ideating", "Imagining", "Improvising", "Incubating",
+  "Inferring", "Infusing", "Julienning", "Kneading", "Leavening",
+  "Lollygagging", "Manifesting", "Marinating", "Meandering",
+  "Metamorphosing", "Moonwalking", "Mulling", "Musing", "Noodling",
+  "Orbiting", "Orchestrating", "Percolating", "Perusing", "Pondering",
+  "Pontificating", "Processing", "Puzzling", "Razzle-dazzling",
+  "Ruminating", "Sautéing", "Seasoning", "Shimmying", "Simmering",
+  "Sketching", "Spelunking", "Spinning", "Sprouting", "Stewing",
+  "Swirling", "Synthesizing", "Thinking", "Tinkering", "Transmuting",
+  "Undulating", "Unfurling", "Vibing", "Wandering", "Whisking",
+  "Working", "Wrangling", "Zesting", "Zigzagging",
+];
 
 function ClaudeSpinner({ size = 20 }: { size?: number }) {
   return (
@@ -12,6 +36,7 @@ function ClaudeSpinner({ size = 20 }: { size?: number }) {
 
 export function ThinkingBlock({ content }: { content: string }) {
   const [collapsed, setCollapsed] = useState(false);
+  const verb = useMemo(() => SPINNER_VERBS[Math.floor(Math.random() * SPINNER_VERBS.length)], []);
 
   return (
     <div style={{ marginBottom: 8 }}>
@@ -34,7 +59,7 @@ export function ThinkingBlock({ content }: { content: string }) {
         onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
       >
         <ClaudeSpinner size={20} />
-        Thinking
+        {verb}
         <span style={{ fontSize: 8, transform: collapsed ? "rotate(0)" : "rotate(90deg)", transition: "transform 0.15s", display: "inline-block" }}>
           {"\u25B6"}
         </span>
