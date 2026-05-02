@@ -74,3 +74,20 @@ export async function getToolCalls(sessionId: string): Promise<ToolCall[]> {
   const res = await fetch(`${BASE}/api/sessions/${sessionId}/tools`);
   return res.json();
 }
+
+export async function exportXml(sessionId: string, uuids: string[]): Promise<string> {
+  const res = await fetch(`${BASE}/api/sessions/${sessionId}/export-xml`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uuids }),
+  });
+  return res.text();
+}
+
+export async function hideSession(sessionId: string): Promise<void> {
+  await fetch(`${BASE}/api/sessions/${sessionId}/hide`, { method: "POST" });
+}
+
+export async function unhideSession(sessionId: string): Promise<void> {
+  await fetch(`${BASE}/api/sessions/${sessionId}/unhide`, { method: "POST" });
+}
