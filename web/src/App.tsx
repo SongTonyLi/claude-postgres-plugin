@@ -13,7 +13,6 @@ export function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
-  // Ctrl+K / Cmd+K to open search
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -25,9 +24,11 @@ export function App() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  useEffect(() => {
+  const refreshSessions = useCallback(() => {
     api.listSessions().then(setSessions).catch(console.error);
   }, []);
+
+  useEffect(() => { refreshSessions(); }, [refreshSessions]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -38,15 +39,8 @@ export function App() {
         setToolCalls(tools);
         setIsLoading(false);
       })
-      .catch((err) => {
-        console.error(err);
-        setIsLoading(false);
-      });
+      .catch((err) => { console.error(err); setIsLoading(false); });
   }, [selectedId]);
-
-  const refreshSessions = useCallback(() => {
-    api.listSessions().then(setSessions).catch(console.error);
-  }, []);
 
   const refreshMessages = useCallback(
     (data: { sessionId: string }) => {
@@ -65,6 +59,15 @@ export function App() {
       }
     },
     [selectedId]
+  );
+
+  const handleHide = useCallback(
+    async (id: string) => {
+      await api.hideSession(id);
+      if (selectedId === id) setSelectedId(null);
+      refreshSessions();
+    },
+    [selectedId, refreshSessions]
   );
 
   const { isConnected } = useSSE({
@@ -89,6 +92,8 @@ export function App() {
         sessions={sessions}
         selectedId={selectedId}
         onSelect={setSelectedId}
+        onHide={handleHide}
+        onSearchOpen={() => setShowSearch(true)}
         isConnected={isConnected}
       />
 
@@ -96,6 +101,7 @@ export function App() {
         <ConversationView
           messages={messages}
           toolCalls={toolCalls}
+          sessionId={selectedId}
           sessionTitle={sel?.title || null}
           sessionStatus={sel?.status || "unknown"}
           sessionCwd={sel?.cwd || null}
@@ -116,14 +122,9 @@ export function App() {
         >
           <div
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
+              width: 48, height: 48, borderRadius: 12,
               background: "linear-gradient(135deg, #d97706, #f59e0b)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: 0.4,
+              display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.4,
             }}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -132,7 +133,7 @@ export function App() {
           </div>
           <span style={{ fontSize: 15, color: "#888", fontWeight: 500 }}>Select a session</span>
           <span style={{ fontSize: 12, color: "#555" }}>
-            Browse your claude-code conversations
+            {"\u2318"}K to search all conversations
           </span>
         </div>
       )}

@@ -1,14 +1,17 @@
 import { useState, useMemo } from "react";
 import type { Session } from "../api/client";
+import { hideSession } from "../api/client";
 
 interface Props {
   sessions: Session[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onHide: (id: string) => void;
+  onSearchOpen: () => void;
   isConnected: boolean;
 }
 
-export function SessionSidebar({ sessions, selectedId, onSelect, isConnected }: Props) {
+export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearchOpen, isConnected }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -27,27 +30,52 @@ export function SessionSidebar({ sessions, selectedId, onSelect, isConnected }: 
     <div className="sidebar">
       {/* Header */}
       <div style={{ padding: "14px 14px 10px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#a1a1a1" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#a1a1a1" }}>
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Claude Sessions</span>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Sessions</span>
         </div>
 
+        {/* Global search bar */}
+        <div
+          onClick={onSearchOpen}
+          style={{
+            width: "100%",
+            padding: "7px 12px",
+            borderRadius: 10,
+            background: "#262626",
+            color: "#666",
+            fontSize: 12,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 6,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          Search all conversations
+          <kbd style={{ marginLeft: "auto", padding: "1px 4px", borderRadius: 3, background: "#333", border: "1px solid #444", fontSize: 10 }}>{"\u2318"}K</kbd>
+        </div>
+
+        {/* Local filter */}
         <input
           type="text"
-          placeholder="Search sessions..."
+          placeholder="Filter sessions..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
             width: "100%",
-            padding: "7px 12px",
-            border: "none",
-            borderRadius: 10,
-            background: "#262626",
+            padding: "5px 10px",
+            border: "1px solid #333",
+            borderRadius: 8,
+            background: "transparent",
             color: "#eee",
             fontFamily: "inherit",
-            fontSize: 13,
+            fontSize: 11,
             outline: "none",
           }}
         />
@@ -90,17 +118,40 @@ export function SessionSidebar({ sessions, selectedId, onSelect, isConnected }: 
                     if (!sel) e.currentTarget.style.background = "transparent";
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: sel ? "#eee" : "#a1a1a1",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {cleanTitle(s.title) || s.id.slice(0, 8)}
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <div
+                      style={{
+                        flex: 1,
+                        fontSize: 13,
+                        color: sel ? "#eee" : "#a1a1a1",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {cleanTitle(s.title) || s.id.slice(0, 8)}
+                    </div>
+                    <button
+                      className="hide-btn"
+                      onClick={(e) => { e.stopPropagation(); onHide(s.id); }}
+                      title="Hide session"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#555",
+                        cursor: "pointer",
+                        padding: 2,
+                        borderRadius: 4,
+                        display: "none",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    </button>
                   </div>
                   <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>
                     {projectName(s.projectPath)}
@@ -169,6 +220,8 @@ export function SessionSidebar({ sessions, selectedId, onSelect, isConnected }: 
           height: 100vh;
           border-right: 1px solid #2a2a2a;
         }
+        .sidebar div:hover > div > .hide-btn { display: block !important; }
+        .hide-btn:hover { color: #ef4444 !important; }
       `}</style>
     </div>
   );
