@@ -91,9 +91,14 @@ export class ConversationStore {
     };
   }
 
-  async listSessions(): Promise<SessionRecord[]> {
+  async listSessions(): Promise<(SessionRecord & { messageCount?: number; toolCount?: number })[]> {
     const sql = getDb();
-    const rows = await sql`SELECT * FROM sessions ORDER BY started_at DESC`;
+    const rows = await sql`
+      SELECT s.*,
+        (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id AND m.role != 'system' AND m.is_meta = false) as message_count,
+        (SELECT COUNT(*) FROM tool_calls t WHERE t.session_id = s.id) as tool_count
+      FROM sessions s ORDER BY started_at DESC
+    `;
     return rows.map((r) => ({
       id: r.id,
       projectPath: r.project_path,
@@ -104,6 +109,8 @@ export class ConversationStore {
       status: r.status,
       title: r.title,
       metadata: r.metadata,
+      messageCount: Number(r.message_count),
+      toolCount: Number(r.tool_count),
     }));
   }
 

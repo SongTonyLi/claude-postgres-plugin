@@ -12,120 +12,128 @@ interface Props {
   thinking: string | null;
   isMeta: boolean;
   toolCalls: Map<string, ToolCall>;
-  metadata?: Record<string, unknown>;
 }
 
-export function MessageBubble({
-  role,
-  content,
-  contentBlocks,
-  thinking,
-  isMeta,
-  toolCalls,
-}: Props) {
+export function MessageBubble({ role, content, contentBlocks, thinking, isMeta, toolCalls }: Props) {
   if (isMeta) return null;
 
-  // System messages (compaction markers)
+  // System compaction marker
   if (role === "system") {
     return (
-      <div style={{ padding: "12px 24px", display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ flex: 1, height: 1, background: "var(--accent-yellow)", opacity: 0.3 }} />
-        <span style={{ color: "var(--accent-yellow)", fontSize: 11, whiteSpace: "nowrap" }}>
+      <div style={{ padding: "8px 20px", display: "flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
+        <span
+          style={{
+            fontSize: 11,
+            color: "#eab308",
+            background: "rgba(234, 179, 8, 0.08)",
+            padding: "3px 10px",
+            borderRadius: 8,
+          }}
+        >
           {content || "context compacted"}
         </span>
-        <div style={{ flex: 1, height: 1, background: "var(--accent-yellow)", opacity: 0.3 }} />
       </div>
     );
   }
 
-  // Tool result messages — skip rendering, shown inline with tool calls
-  const hasToolResult = contentBlocks.some((b) => b.type === "tool_result");
-  if (hasToolResult) return null;
+  // Skip tool_result user messages
+  if (contentBlocks.some((b) => b.type === "tool_result")) return null;
 
   const isUser = role === "user";
 
-  return (
-    <div style={{ padding: "0 0 4px 0" }}>
-      {/* User message: styled like claude-code's prompt input */}
-      {isUser && (
+  // ─── User message: right-aligned bubble (Open WebUI style) ─────
+  if (isUser) {
+    const text =
+      contentBlocks
+        .filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text")
+        .map((b) => b.text)
+        .join("\n") || content || "";
+
+    return (
+      <div className="fade-up" style={{ padding: "6px 20px", display: "flex", justifyContent: "flex-end" }}>
         <div
           style={{
-            padding: "12px 24px",
-            background: "var(--bg-secondary)",
-            borderTop: "1px solid var(--border)",
-            borderBottom: "1px solid var(--border)",
+            maxWidth: "85%",
+            background: "#2a2a2a",
+            borderRadius: "20px 20px 4px 20px",
+            padding: "10px 16px",
+            fontSize: 14,
+            lineHeight: 1.6,
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
           }}
         >
-          <div style={{ display: "flex", gap: 8 }}>
-            <span
-              style={{
-                color: "var(--accent-green)",
-                fontWeight: 700,
-                flexShrink: 0,
-                lineHeight: "1.6",
-              }}
-            >
-              {">"}
-            </span>
-            <div style={{ flex: 1 }}>
-              {contentBlocks.map((block, i) => {
-                if (block.type === "text" && block.text) {
-                  return (
-                    <span key={i} style={{ color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
-                      {block.text}
-                    </span>
-                  );
-                }
-                return null;
-              })}
-              {contentBlocks.length === 0 && content && (
-                <span style={{ color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
-                  {content}
-                </span>
-              )}
-            </div>
+          {text}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Assistant message: left-aligned with avatar (Open WebUI style) ─────
+  return (
+    <div className="fade-up" style={{ padding: "6px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+      {/* Avatar */}
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          background: "linear-gradient(135deg, #d97706, #f59e0b)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          marginTop: 2,
+          fontSize: 14,
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5z" />
+          <path d="M17 14a7 7 0 0 1-14 0" />
+          <path d="M12 18v4" />
+        </svg>
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0, maxWidth: "calc(100% - 50px)" }}>
+        {/* Model label */}
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#a1a1a1", marginBottom: 4 }}>
+          Claude
+        </div>
+
+        {thinking && <ThinkingBlock content={thinking} />}
+
+        {contentBlocks.map((block, i) => {
+          if (block.type === "text" && block.text) {
+            return (
+              <div key={i} className="prose-chat">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                  {block.text}
+                </ReactMarkdown>
+              </div>
+            );
+          }
+          if (block.type === "tool_use") {
+            return (
+              <ToolCallBlock
+                key={i}
+                toolName={block.name}
+                input={block.input}
+                result={toolCalls.get(block.id)}
+              />
+            );
+          }
+          return null;
+        })}
+
+        {contentBlocks.length === 0 && content && (
+          <div className="prose-chat">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+              {content}
+            </ReactMarkdown>
           </div>
-        </div>
-      )}
-
-      {/* Assistant message: styled like claude-code's output */}
-      {!isUser && (
-        <div style={{ padding: "12px 24px 8px 24px" }}>
-          {/* Thinking block */}
-          {thinking && <ThinkingBlock content={thinking} />}
-
-          {/* Content blocks */}
-          {contentBlocks.map((block, i) => {
-            if (block.type === "text" && block.text) {
-              return (
-                <div key={i} className="markdown-body">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                    {block.text}
-                  </ReactMarkdown>
-                </div>
-              );
-            }
-
-            if (block.type === "tool_use") {
-              const result = toolCalls.get(block.id);
-              return (
-                <ToolCallBlock key={i} toolName={block.name} input={block.input} result={result} />
-              );
-            }
-
-            return null;
-          })}
-
-          {/* Fallback */}
-          {contentBlocks.length === 0 && content && (
-            <div className="markdown-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                {content}
-              </ReactMarkdown>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

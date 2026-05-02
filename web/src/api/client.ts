@@ -10,6 +10,8 @@ export interface Session {
   status: string;
   title: string | null;
   metadata: Record<string, unknown>;
+  messageCount?: number;
+  toolCount?: number;
 }
 
 export interface Message {

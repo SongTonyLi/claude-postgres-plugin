@@ -9,106 +9,66 @@ interface Props {
 
 export function ToolCallBlock({ toolName, input, result }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const statusColor =
-    result?.status === "completed"
-      ? "var(--accent-green)"
-      : result?.status === "failed"
-        ? "var(--accent-red)"
-        : "var(--accent-yellow)";
+  const ok = result?.status === "completed";
+  const fail = result?.status === "failed";
+  const summary = inputSummary(toolName, input);
 
   return (
     <div
       style={{
-        border: "1px solid var(--border)",
-        borderRadius: 6,
-        marginBottom: 8,
-        background: "var(--bg-primary)",
+        margin: "6px 0",
+        borderRadius: 12,
+        border: "1px solid #333",
+        background: "#1e1e1e",
         overflow: "hidden",
       }}
     >
-      <button
+      <div
         onClick={() => setExpanded(!expanded)}
         style={{
-          width: "100%",
           display: "flex",
           alignItems: "center",
           gap: 8,
-          padding: "8px 12px",
-          background: "none",
-          border: "none",
-          color: "var(--text-primary)",
+          padding: "7px 12px",
           cursor: "pointer",
-          fontFamily: "inherit",
+          userSelect: "none",
           fontSize: 13,
-          textAlign: "left",
         }}
       >
-        <span
-          style={{
-            transform: expanded ? "rotate(90deg)" : "rotate(0)",
-            transition: "transform 0.15s",
-            display: "inline-block",
-            fontSize: 10,
-          }}
-        >
+        <span style={{ fontSize: 8, color: "#666", transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.1s", display: "inline-block" }}>
           {"\u25B6"}
         </span>
-        <span style={{ color: "var(--accent-cyan)", fontWeight: 500 }}>{toolName}</span>
-        <span
-          style={{
-            color: "var(--text-muted)",
-            fontSize: 12,
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {formatInputSummary(toolName, input)}
+        <span style={{ fontWeight: 600, color: "#06b6d4", fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{toolName}</span>
+        <span style={{ flex: 1, color: "#555", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'JetBrains Mono', monospace" }}>
+          {summary}
         </span>
-        <span style={{ color: statusColor, fontSize: 11, flexShrink: 0 }}>
-          {result?.status === "completed" ? "\u2713" : result?.status === "failed" ? "\u2717" : "\u25CF"}
+        <span style={{ color: ok ? "#22c55e" : fail ? "#ef4444" : "#eab308", fontSize: 12 }}>
+          {ok ? "\u2713" : fail ? "\u2717" : "\u2022"}
         </span>
-      </button>
+      </div>
 
       {expanded && (
-        <div style={{ borderTop: "1px solid var(--border)", padding: 12 }}>
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ color: "var(--text-muted)", fontSize: 11, marginBottom: 4 }}>Input</div>
-            <pre
-              style={{
-                margin: 0,
-                fontSize: 12,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
+        <div style={{ borderTop: "1px solid #333" }}>
+          <div style={{ padding: "8px 12px" }}>
+            <div style={{ fontSize: 10, color: "#666", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Input</div>
+            <pre style={{ margin: 0, fontSize: 12, color: "#a1a1a1", whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#171717", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5, maxHeight: 200, overflowY: "auto" }}>
               {formatInput(toolName, input)}
             </pre>
           </div>
           {result?.output && (
-            <div>
-              <div style={{ color: "var(--text-muted)", fontSize: 11, marginBottom: 4 }}>Output</div>
-              <pre
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  maxHeight: 400,
-                  overflowY: "auto",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {result.output.length > 3000
-                  ? result.output.slice(0, 3000) + "\n... (truncated)"
-                  : result.output}
+            <div style={{ padding: "0 12px 8px" }}>
+              <div style={{ fontSize: 10, color: "#666", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Output</div>
+              <pre style={{ margin: 0, fontSize: 12, color: "#a1a1a1", whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#171717", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5, maxHeight: 350, overflowY: "auto" }}>
+                {result.output.length > 4000 ? result.output.slice(0, 4000) + "\n\n--- truncated ---" : result.output}
               </pre>
             </div>
           )}
           {result?.error && (
-            <div>
-              <div style={{ color: "var(--accent-red)", fontSize: 11, marginBottom: 4 }}>Error</div>
-              <pre style={{ margin: 0, fontSize: 12, color: "var(--accent-red)" }}>{result.error}</pre>
+            <div style={{ padding: "0 12px 8px" }}>
+              <div style={{ fontSize: 10, color: "#ef4444", marginBottom: 4, fontWeight: 600, textTransform: "uppercase" }}>Error</div>
+              <pre style={{ margin: 0, fontSize: 12, color: "#ef4444", whiteSpace: "pre-wrap", background: "rgba(239,68,68,0.06)", padding: "8px 12px", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                {result.error}
+              </pre>
             </div>
           )}
         </div>
@@ -117,29 +77,27 @@ export function ToolCallBlock({ toolName, input, result }: Props) {
   );
 }
 
-function formatInputSummary(toolName: string, input: unknown): string {
+function inputSummary(n: string, input: unknown): string {
   if (!input || typeof input !== "object") return "";
-  const obj = input as Record<string, unknown>;
-  if (toolName === "Read" && obj.file_path) return String(obj.file_path);
-  if (toolName === "Write" && obj.file_path) return String(obj.file_path);
-  if (toolName === "Edit" && obj.file_path) return String(obj.file_path);
-  if (toolName === "Bash" && obj.command) return String(obj.command).slice(0, 60);
-  if (toolName === "Glob" && obj.pattern) return String(obj.pattern);
-  if (toolName === "Grep" && obj.pattern) return `/${obj.pattern}/`;
-  if (toolName === "Agent" && obj.description) return String(obj.description);
+  const o = input as Record<string, unknown>;
+  if (n === "Read" && o.file_path) return String(o.file_path);
+  if (n === "Write" && o.file_path) return String(o.file_path);
+  if (n === "Edit" && o.file_path) return String(o.file_path);
+  if (n === "Bash" && o.command) return String(o.command).slice(0, 80);
+  if (n === "Glob" && o.pattern) return String(o.pattern);
+  if (n === "Grep" && o.pattern) return `/${o.pattern}/`;
+  if (n === "Agent" && o.description) return String(o.description).slice(0, 60);
   return "";
 }
 
-function formatInput(toolName: string, input: unknown): string {
-  if (!input || typeof input !== "object") return JSON.stringify(input, null, 2);
-  const obj = input as Record<string, unknown>;
-  if (toolName === "Read" && obj.file_path) return String(obj.file_path);
-  if (toolName === "Write" && obj.file_path)
-    return `${obj.file_path}\n\n${String(obj.content || "").slice(0, 500)}`;
-  if (toolName === "Edit" && obj.file_path)
-    return `${obj.file_path}\n\n- ${String(obj.old_string || "").slice(0, 200)}\n+ ${String(obj.new_string || "").slice(0, 200)}`;
-  if (toolName === "Bash" && obj.command) return String(obj.command);
-  if (toolName === "Glob") return `pattern: ${obj.pattern}${obj.path ? `\npath: ${obj.path}` : ""}`;
-  if (toolName === "Grep") return `pattern: /${obj.pattern}/${obj.glob ? `\nglob: ${obj.glob}` : ""}`;
-  return JSON.stringify(obj, null, 2);
+function formatInput(n: string, input: unknown): string {
+  if (!input || typeof input !== "object") return String(input);
+  const o = input as Record<string, unknown>;
+  if (n === "Read") return String(o.file_path || "");
+  if (n === "Bash") return String(o.command || "");
+  if (n === "Glob") return `pattern: ${o.pattern}${o.path ? `\npath: ${o.path}` : ""}`;
+  if (n === "Grep") return `/${o.pattern}/${o.glob ? `  glob: ${o.glob}` : ""}`;
+  if (n === "Edit") return `${o.file_path}\n- ${String(o.old_string || "").slice(0, 300)}\n+ ${String(o.new_string || "").slice(0, 300)}`;
+  if (n === "Write") return `${o.file_path}\n${String(o.content || "").slice(0, 500)}`;
+  return JSON.stringify(o, null, 2);
 }

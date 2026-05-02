@@ -8,6 +8,7 @@ interface Props {
   sessionTitle: string | null;
   sessionStatus: string;
   sessionCwd: string | null;
+  sessionStartedAt: string | null;
   isLoading: boolean;
 }
 
@@ -17,19 +18,12 @@ export function ConversationView({
   sessionTitle,
   sessionStatus,
   sessionCwd,
+  sessionStartedAt,
   isLoading,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
-
   const toolMap = new Map<string, ToolCall>();
-  for (const tc of toolCalls) {
-    toolMap.set(tc.toolUseId, tc);
-  }
-
-  const userMsgCount = messages.filter(
-    (m) => m.role === "user" && !m.isMeta && !m.contentBlocks.some((b) => b.type === "tool_result")
-  ).length;
-  const assistantMsgCount = messages.filter((m) => m.role === "assistant" && !m.isMeta).length;
+  for (const tc of toolCalls) toolMap.set(tc.toolUseId, tc);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,116 +31,85 @@ export function ConversationView({
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--text-muted)",
-          background: "var(--bg-primary)",
-        }}
-      >
-        Loading...
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#171717", color: "#666" }}>
+        <span className="pulse" style={{ animation: "pulse 2s ease-in-out infinite" }}>Loading...</span>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        overflow: "hidden",
-        background: "var(--bg-primary)",
-      }}
-    >
-      {/* Terminal-like title bar */}
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", background: "#171717" }}>
+      {/* Top navbar (Open WebUI style) */}
       <div
         style={{
-          padding: "8px 24px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-secondary)",
+          padding: "10px 20px",
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          gap: 10,
+          borderBottom: "1px solid #2a2a2a",
+          background: "#1e1e1e",
           flexShrink: 0,
-          fontSize: 12,
         }}
       >
-        {/* Window control dots */}
-        <div style={{ display: "flex", gap: 6 }}>
-          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }} />
-          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }} />
-          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>Claude</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </div>
-
-        <span style={{ color: "var(--text-secondary)" }}>
-          claude
-        </span>
-        <span style={{ color: "var(--text-muted)" }}>
-          {sessionCwd || "~"}
-        </span>
-
         <span
           style={{
-            marginLeft: "auto",
             padding: "2px 8px",
-            borderRadius: 10,
-            fontSize: 10,
-            background:
-              sessionStatus === "active" ? "rgba(63,185,80,0.15)" : "rgba(139,148,158,0.15)",
-            color: sessionStatus === "active" ? "var(--accent-green)" : "var(--text-secondary)",
+            borderRadius: 6,
+            fontSize: 11,
+            background: sessionStatus === "active" ? "rgba(34, 197, 94, 0.1)" : "rgba(102, 102, 102, 0.15)",
+            color: sessionStatus === "active" ? "#22c55e" : "#666",
           }}
         >
           {sessionStatus}
         </span>
-        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
-          {userMsgCount} prompts, {toolCalls.length} tools
+        <span style={{ fontSize: 11, color: "#555" }}>
+          {toolCalls.length} tools
         </span>
       </div>
 
-      {/* Messages in terminal scroll area */}
+      {/* Messages area */}
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {/* Session start marker */}
-        <div
-          style={{
-            padding: "16px 24px 8px",
-            color: "var(--text-muted)",
-            fontSize: 11,
-          }}
-        >
-          Session started {new Date(messages[0]?.timestamp || "").toLocaleString()}
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 0 0" }}>
+          {/* Session info banner */}
+          {sessionStartedAt && (
+            <div style={{ textAlign: "center", padding: "16px 20px 10px", fontSize: 11, color: "#555" }}>
+              {sessionCwd && <div style={{ marginBottom: 2 }}>{sessionCwd}</div>}
+              {new Date(sessionStartedAt).toLocaleString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </div>
+          )}
+
+          {messages.map((msg) => (
+            <MessageBubble
+              key={msg.uuid}
+              role={msg.role}
+              content={msg.content}
+              contentBlocks={msg.contentBlocks}
+              thinking={msg.thinking}
+              isMeta={msg.isMeta}
+              toolCalls={toolMap}
+            />
+          ))}
+
+          {messages.length === 0 && (
+            <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 13 }}>
+              Empty session
+            </div>
+          )}
+
+          <div ref={bottomRef} style={{ height: 30 }} />
         </div>
-
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.uuid}
-            role={msg.role}
-            content={msg.content}
-            contentBlocks={msg.contentBlocks}
-            thinking={msg.thinking}
-            isMeta={msg.isMeta}
-            toolCalls={toolMap}
-            metadata={msg.metadata}
-          />
-        ))}
-
-        {messages.length === 0 && (
-          <div
-            style={{
-              padding: 40,
-              textAlign: "center",
-              color: "var(--text-muted)",
-              fontSize: 13,
-            }}
-          >
-            No messages in this session
-          </div>
-        )}
-        <div ref={bottomRef} style={{ height: 24 }} />
       </div>
     </div>
   );

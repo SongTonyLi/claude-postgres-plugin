@@ -11,12 +11,10 @@ export function App() {
   const [toolCalls, setToolCalls] = useState<api.ToolCall[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load sessions on mount
   useEffect(() => {
     api.listSessions().then(setSessions).catch(console.error);
   }, []);
 
-  // Load conversation when session selected
   useEffect(() => {
     if (!selectedId) return;
     setIsLoading(true);
@@ -32,7 +30,6 @@ export function App() {
       });
   }, [selectedId]);
 
-  // SSE handlers
   const refreshSessions = useCallback(() => {
     api.listSessions().then(setSessions).catch(console.error);
   }, []);
@@ -42,7 +39,6 @@ export function App() {
       if (data.sessionId === selectedId) {
         api.getMessages(data.sessionId).then(setMessages).catch(console.error);
       }
-      // Also refresh sessions list to update status/title
       refreshSessions();
     },
     [selectedId, refreshSessions]
@@ -65,7 +61,7 @@ export function App() {
     onToolUpdate: refreshTools,
   });
 
-  const selectedSession = sessions.find((s) => s.id === selectedId);
+  const sel = sessions.find((s) => s.id === selectedId);
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
@@ -80,9 +76,10 @@ export function App() {
         <ConversationView
           messages={messages}
           toolCalls={toolCalls}
-          sessionTitle={selectedSession?.title || null}
-          sessionStatus={selectedSession?.status || "unknown"}
-          sessionCwd={selectedSession?.cwd || null}
+          sessionTitle={sel?.title || null}
+          sessionStatus={sel?.status || "unknown"}
+          sessionCwd={sel?.cwd || null}
+          sessionStartedAt={sel?.startedAt || null}
           isLoading={isLoading}
         />
       ) : (
@@ -93,14 +90,29 @@ export function App() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            color: "var(--text-muted)",
-            gap: 12,
+            background: "#171717",
+            gap: 10,
           }}
         >
-          <span style={{ fontSize: 40, opacity: 0.3 }}>{"\u2726"}</span>
-          <span style={{ fontSize: 14 }}>Select a session to view</span>
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-            Conversations from claude-code are stored in PostgreSQL
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, #d97706, #f59e0b)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: 0.4,
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <span style={{ fontSize: 15, color: "#888", fontWeight: 500 }}>Select a session</span>
+          <span style={{ fontSize: 12, color: "#555" }}>
+            Browse your claude-code conversations
           </span>
         </div>
       )}
