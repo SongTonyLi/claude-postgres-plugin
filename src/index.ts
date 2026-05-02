@@ -43,7 +43,7 @@ async function startAll() {
     sse.broadcast("tool:update", { sessionId: sid, toolUseId: toolId }, sid)
   );
   pipeline.on("error", (err) => console.error("Pipeline error:", err.message));
-  pipeline.start();
+  await pipeline.start();
 
   // Start web server
   const app = createApp(store, sse);
@@ -79,7 +79,7 @@ async function importExisting() {
   let eventCount = 0;
   pipeline.on("message:new", () => eventCount++);
   pipeline.on("error", (err) => console.error("  Error:", err.message));
-  pipeline.start();
+  await pipeline.start();
 
   pipeline.watcher.on("ready", async () => {
     console.log("Initial scan complete. Waiting for processing...");

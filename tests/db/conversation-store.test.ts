@@ -132,7 +132,7 @@ describe("ConversationStore", () => {
       status: "pending",
     });
 
-    await store.completeToolCall("tool-1", "file contents here", null);
+    await store.completeToolCall("tool-1", "file contents here", null, "result-msg-1");
 
     const tools = await store.getToolCalls("sess-1");
     expect(tools.length).toBe(1);

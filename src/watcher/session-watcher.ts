@@ -1,5 +1,5 @@
-import { watch, readFileSync, existsSync, statSync } from "fs";
-import { join, extname } from "path";
+import { watch, readFileSync, readdirSync, existsSync } from "fs";
+import { join } from "path";
 import { homedir } from "os";
 import EventEmitter from "eventemitter3";
 
@@ -14,7 +14,7 @@ export class SessionWatcher extends EventEmitter<WatcherEvents> {
   private watchPath: string;
   private abortController: AbortController | null = null;
   private pollInterval: ReturnType<typeof setInterval> | null = null;
-  private knownFiles: Set<string> = new Set();
+  private hasFsWatch = false;
 
   constructor(watchPath?: string) {
     super();
@@ -24,43 +24,41 @@ export class SessionWatcher extends EventEmitter<WatcherEvents> {
   start(): void {
     this.abortController = new AbortController();
 
-    // Initial scan for existing JSONL files
+    // Initial scan
     this.scanDirectory(this.watchPath);
 
-    // Use fs.watch for real-time detection of new/changed files
+    // Try native fs.watch (fast, event-driven)
     try {
-      watch(this.watchPath, { recursive: true, signal: this.abortController.signal }, (eventType, filename) => {
+      watch(this.watchPath, { recursive: true, signal: this.abortController.signal }, (_eventType, filename) => {
         if (!filename || !filename.endsWith(".jsonl")) return;
         const filePath = join(this.watchPath, filename);
         if (existsSync(filePath)) {
           this.processFile(filePath);
         }
       });
-    } catch (err) {
-      // fs.watch with recursive may not work on all platforms, fall back to polling
-      this.pollInterval = setInterval(() => this.scanDirectory(this.watchPath), 500);
+      this.hasFsWatch = true;
+      // Light polling fallback to catch edge cases fs.watch misses
+      this.pollInterval = setInterval(() => this.scanDirectory(this.watchPath), 5000);
+    } catch {
+      // fs.watch recursive not supported — use polling only
+      this.pollInterval = setInterval(() => this.scanDirectory(this.watchPath), 1000);
     }
 
-    // Also poll periodically to catch any missed changes
-    this.pollInterval = setInterval(() => this.scanDirectory(this.watchPath), 2000);
-
-    // Signal ready after initial scan
     setTimeout(() => this.emit("ready"), 100);
   }
 
   private scanDirectory(dir: string): void {
     try {
       if (!existsSync(dir)) return;
-      const { readdirSync } = require("fs");
-      const entries = readdirSync(dir, { withFileTypes: true, recursive: true }) as any[];
+      const entries = readdirSync(dir, { withFileTypes: true, recursive: true } as any) as any[];
       for (const entry of entries) {
         if (entry.isFile() && entry.name.endsWith(".jsonl")) {
           const filePath = join(entry.parentPath || entry.path || dir, entry.name);
           this.processFile(filePath);
         }
       }
-    } catch (err) {
-      // Ignore scan errors
+    } catch {
+      // Ignore scan errors (permission, missing dirs)
     }
   }
 
@@ -75,7 +73,13 @@ export class SessionWatcher extends EventEmitter<WatcherEvents> {
       const newContent = content.slice(currentOffset);
       if (!newContent.trim()) return;
 
-      const lines = newContent.split("\n");
+      // Only advance offset to the last complete line (ends with \n)
+      const lastNewline = newContent.lastIndexOf("\n");
+      if (lastNewline === -1) return; // No complete line yet
+
+      const completeContent = newContent.slice(0, lastNewline);
+      const lines = completeContent.split("\n");
+
       let lineOffset = currentOffset === 0
         ? 0
         : content.slice(0, currentOffset).split("\n").length - 1;
@@ -87,7 +91,8 @@ export class SessionWatcher extends EventEmitter<WatcherEvents> {
         }
       }
 
-      this.fileOffsets.set(filePath, content.length);
+      // Advance offset to end of last complete line only
+      this.fileOffsets.set(filePath, currentOffset + lastNewline + 1);
     } catch (err) {
       this.emit("error", err instanceof Error ? err : new Error(String(err)));
     }

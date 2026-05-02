@@ -77,7 +77,7 @@ describe("E2E: Full Flow", () => {
 
     writeFileSync(jsonlPath, conversation.map((e) => JSON.stringify(e)).join("\n") + "\n");
 
-    pipeline.start();
+    await pipeline.start();
     await new Promise((r) => setTimeout(r, 1200));
     await pipeline.stop();
 
@@ -178,7 +178,7 @@ describe("E2E: Full Flow", () => {
     writeFileSync(jsonlPath, lines.join("\n") + "\n");
 
     const pipeline = new IngestPipeline(store, testDir);
-    pipeline.start();
+    await pipeline.start();
     await new Promise((r) => setTimeout(r, 800));
     await pipeline.stop();
 

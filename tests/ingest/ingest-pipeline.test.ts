@@ -45,7 +45,7 @@ describe("IngestPipeline", () => {
 
     writeFileSync(jsonlPath, userMsg + "\n");
 
-    pipeline.start();
+    await pipeline.start();
     await new Promise((r) => setTimeout(r, 800));
     await pipeline.stop();
 
@@ -90,7 +90,7 @@ describe("IngestPipeline", () => {
 
     writeFileSync(jsonlPath, lines.join("\n") + "\n");
 
-    pipeline.start();
+    await pipeline.start();
     await new Promise((r) => setTimeout(r, 800));
     await pipeline.stop();
 
@@ -118,7 +118,7 @@ describe("IngestPipeline", () => {
       }) + "\n"
     );
 
-    pipeline.start();
+    await pipeline.start();
     await new Promise((r) => setTimeout(r, 600));
 
     let messages = await store.getMessages(sessionId);

@@ -1,4 +1,7 @@
+import postgres from "postgres";
 import { getDb } from "../db/connection";
+
+type Sql = ReturnType<typeof postgres>;
 
 export interface SessionRecord {
   id: string;
@@ -48,8 +51,14 @@ export interface RawEventRecord {
 }
 
 export class ConversationStore {
-  async upsertSession(session: SessionRecord): Promise<void> {
+  /** Run a callback inside a database transaction (ACID). */
+  async transact(fn: (tx: Sql) => Promise<void>): Promise<void> {
     const sql = getDb();
+    await sql.begin((tx) => fn(tx));
+  }
+
+  async upsertSession(session: SessionRecord, tx?: Sql): Promise<void> {
+    const sql = tx || getDb();
     await sql`
       INSERT INTO sessions (id, project_path, cwd, model, started_at, ended_at, status, title, metadata)
       VALUES (
@@ -114,8 +123,8 @@ export class ConversationStore {
     }));
   }
 
-  async insertMessage(msg: MessageRecord): Promise<void> {
-    const sql = getDb();
+  async insertMessage(msg: MessageRecord, tx?: Sql): Promise<void> {
+    const sql = tx || getDb();
     await sql`
       INSERT INTO messages (session_id, uuid, parent_uuid, role, content, content_blocks, thinking, is_sidechain, is_meta, sequence_num, timestamp, metadata)
       VALUES (
@@ -157,8 +166,8 @@ export class ConversationStore {
     }));
   }
 
-  async insertToolCall(tool: ToolCallRecord): Promise<void> {
-    const sql = getDb();
+  async insertToolCall(tool: ToolCallRecord, tx?: Sql): Promise<void> {
+    const sql = tx || getDb();
     await sql`
       INSERT INTO tool_calls (session_id, message_uuid, tool_use_id, tool_name, input, status)
       VALUES (
@@ -173,14 +182,15 @@ export class ConversationStore {
     `;
   }
 
-  async completeToolCall(toolUseId: string, output: string | null, error: string | null): Promise<void> {
-    const sql = getDb();
+  async completeToolCall(toolUseId: string, output: string | null, error: string | null, resultUuid?: string, tx?: Sql): Promise<void> {
+    const sql = tx || getDb();
     const status = error ? "failed" : "completed";
     await sql`
       UPDATE tool_calls SET
         output = ${output},
         error = ${error},
         status = ${status},
+        result_uuid = ${resultUuid ?? null},
         completed_at = NOW()
       WHERE tool_use_id = ${toolUseId}
     `;
@@ -234,8 +244,8 @@ export class ConversationStore {
     }));
   }
 
-  async insertRawEvent(event: RawEventRecord): Promise<void> {
-    const sql = getDb();
+  async insertRawEvent(event: RawEventRecord, tx?: Sql): Promise<void> {
+    const sql = tx || getDb();
     await sql`
       INSERT INTO raw_events (session_id, event_type, data, file_path, line_number)
       VALUES (
@@ -246,5 +256,19 @@ export class ConversationStore {
         ${event.lineNumber ?? null}
       )
     `;
+  }
+
+  /** Get all known session IDs (for seeding in-memory caches on restart). */
+  async getSessionIds(): Promise<Set<string>> {
+    const sql = getDb();
+    const rows = await sql`SELECT id FROM sessions`;
+    return new Set(rows.map((r) => r.id));
+  }
+
+  /** Get session IDs that already have a title. */
+  async getTitledSessionIds(): Promise<Set<string>> {
+    const sql = getDb();
+    const rows = await sql`SELECT id FROM sessions WHERE title IS NOT NULL AND title != ''`;
+    return new Set(rows.map((r) => r.id));
   }
 }
