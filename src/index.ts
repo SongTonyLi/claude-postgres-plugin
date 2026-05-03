@@ -4,6 +4,7 @@ import { IngestPipeline } from "./ingest/ingest-pipeline";
 import { SSEManager } from "./server/sse";
 import { createApp } from "./server/app";
 import { closeDb } from "./db/connection";
+import { runMcpServer } from "./mcp-server";
 
 const PORT = parseInt(process.env.CPG_PORT || "3456");
 
@@ -16,11 +17,14 @@ async function main() {
     await startWeb();
   } else if (command === "import") {
     await importExisting();
+  } else if (command === "mcp") {
+    await runMcpServer();
   } else {
-    console.log("Usage: cpg [start|web|import]");
-    console.log("  start   - Start watcher + web server (default)");
-    console.log("  web     - Start only web dashboard");
+    console.log("Usage: cpg [start|web|import|mcp]");
+    console.log("  start   - Start watcher + web dashboard (default)");
+    console.log("  web     - Start only the web dashboard");
     console.log("  import  - Import existing session files");
+    console.log("  mcp     - Run as a stdio MCP server (used by Claude Code plugin)");
     process.exit(0);
   }
 }

@@ -37,5 +37,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 web/node_modules
 web/dist
 
+# Compiled binaries (built by `bun run build`, platform-specific)
+bin/
+
 # Claude
 .claude/

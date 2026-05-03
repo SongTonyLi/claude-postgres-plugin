@@ -3,8 +3,29 @@ import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { existsSync } from "fs";
 import type { ConversationStore } from "../store/conversation-store";
 import type { SSEManager } from "./sse";
+
+// Resolve the web/dist directory across three runtime modes:
+//   1. Explicit CPG_WEB_DIST env var (overrides everything)
+//   2. Compiled binary at bin/cpg with web/dist as a sibling of bin/
+//   3. Dev mode: running via `bun run`, web/dist is two levels up from this file
+function resolveWebDist(): string {
+  const explicit = process.env.CPG_WEB_DIST;
+  if (explicit) return explicit;
+
+  const binDir = dirname(process.execPath);
+  const candidates = [
+    join(binDir, "..", "web", "dist"), // bin/cpg + web/dist as sibling of bin/
+    join(binDir, "web", "dist"),       // bin/ contains web/dist directly
+  ];
+  for (const c of candidates) if (existsSync(c)) return c;
+
+  // Dev fallback: this file's location is meaningful (not inside a compiled binary).
+  const sourceRelative = join(dirname(fileURLToPath(import.meta.url)), "../../web/dist");
+  return sourceRelative;
+}
 
 export function createApp(store: ConversationStore, sse: SSEManager): Hono {
   const app = new Hono();
@@ -177,7 +198,7 @@ export function createApp(store: ConversationStore, sse: SSEManager): Hono {
   });
 
   // Static files for web dashboard
-  const staticRoot = join(dirname(fileURLToPath(import.meta.url)), "../../web/dist");
+  const staticRoot = resolveWebDist();
   app.use("/*", serveStatic({ root: staticRoot }));
   app.get("*", serveStatic({ path: join(staticRoot, "index.html") }));
 

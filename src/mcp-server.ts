@@ -282,7 +282,7 @@ async function dispatch(req: JsonRpcRequest): Promise<void> {
   if (id != null) sendError(id, -32601, `Method not found: ${method}`);
 }
 
-async function main() {
+export async function runMcpServer(): Promise<void> {
   await runMigrations();
   log("started");
 
@@ -325,7 +325,9 @@ async function main() {
   process.on("SIGTERM", shutdown);
 }
 
-main().catch((e) => {
-  log("fatal:", e);
-  process.exit(1);
-});
+if (import.meta.main) {
+  runMcpServer().catch((e) => {
+    log("fatal:", e);
+    process.exit(1);
+  });
+}
