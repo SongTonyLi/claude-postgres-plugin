@@ -4,7 +4,7 @@ https://github.com/user-attachments/assets/49c8e498-d7ca-4390-96b8-38e6397b6760
 
 Embedded conversation viewer **and MCP search server** for Claude Code. Never lose a conversation, never lose context — even when your network drops mid-session.
 
-> **About the name:** v0.1 used PostgreSQL. v0.2+ uses embedded SQLite (WAL + FTS5) — no daemon, no `createdb`, no separate database service. The repo name stays for continuity. ACID guarantees are preserved.
+> **Renamed in v0.2.1.** The project was originally `claude-postgres-plugin` (PostgreSQL-backed). v0.2 swapped the database for embedded SQLite (WAL + FTS5) — no daemon, no `createdb`, no separate database service — and v0.2.1 renamed everything user-visible to match: plugin id `claude-sqlite-plugin`, MCP server `claude-sqlite`, slash commands `/csp-*`. If you installed v0.2.0 under the old name, run `/plugin uninstall claude-postgres-plugin@songtonyli-plugins` then reinstall under the new name. The old GitHub URL still redirects.
 
 ## The problem this solves
 
@@ -193,6 +193,7 @@ When running as a Claude Code plugin, set these in your shell or `.env` before l
 
 ## Current Status
 
+- [x] **v0.2.1: rename to `claude-sqlite-plugin`** — plugin id, MCP server, slash commands, env vars, default DB path all renamed away from `cpg`/`claude-postgres` to match the SQLite reality
 - [x] **v0.2: SQLite swap** — dropped PostgreSQL dep entirely, embedded WAL + FTS5
 - [x] Schema + migrations (ACID via WAL + `synchronous = FULL` + foreign keys)
 - [x] Session file watcher (real-time detection)
