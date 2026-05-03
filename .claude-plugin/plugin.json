@@ -1,0 +1,16 @@
+{
+  "name": "claude-postgres-plugin",
+  "version": "0.1.0",
+  "description": "PostgreSQL-backed viewer + MCP search for past Claude Code session history",
+  "author": { "name": "Song Li" },
+  "homepage": "https://github.com/SongTonyLi/claude-postgres-plugin",
+  "repository": "https://github.com/SongTonyLi/claude-postgres-plugin",
+  "license": "MIT",
+  "keywords": ["postgres", "history", "search", "mcp", "sessions", "viewer"],
+  "mcpServers": {
+    "claude-postgres": {
+      "command": "bun",
+      "args": ["run", "${CLAUDE_PLUGIN_ROOT}/src/mcp-server.ts"]
+    }
+  }
+}
