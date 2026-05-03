@@ -6,7 +6,7 @@
     {
       "name": "claude-postgres-plugin",
       "source": "./",
-      "description": "PostgreSQL-backed viewer + MCP search for past Claude Code session history",
+      "description": "Embedded conversation viewer + MCP search for past Claude Code session history",
       "category": "history",
       "tags": ["postgres", "history", "search", "mcp", "viewer"]
     }

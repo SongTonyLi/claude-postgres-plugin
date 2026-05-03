@@ -2,7 +2,9 @@
 
 https://github.com/user-attachments/assets/49c8e498-d7ca-4390-96b8-38e6397b6760
 
-PostgreSQL-backed conversation viewer **and MCP search server** for Claude Code. Never lose a conversation, never lose context — even when your network drops mid-session.
+Embedded conversation viewer **and MCP search server** for Claude Code. Never lose a conversation, never lose context — even when your network drops mid-session.
+
+> **About the name:** v0.1 used PostgreSQL. v0.2+ uses embedded SQLite (WAL + FTS5) — no daemon, no `createdb`, no separate database service. The repo name stays for continuity. ACID guarantees are preserved.
 
 ## The problem this solves
 
@@ -20,7 +22,7 @@ The JSONL file Claude Code writes to `~/.claude/projects/` survives all of that.
 
 This plugin fixes that:
 
-- **A real-time watcher** ingests every message into Postgres the moment Claude Code writes it to disk. No transaction is ever lost, even if the parent terminal dies.
+- **A real-time watcher** ingests every message into a local SQLite database the moment Claude Code writes it to disk. ACID-safe via WAL + `synchronous = FULL` + foreign keys. No transaction is ever lost, even if the parent terminal dies.
 - **A web dashboard** at `http://localhost:3456` lets you browse, search, and export every past session — text, tool calls, thinking blocks, **and image / document attachments** rendered exactly as they appeared.
 - **An MCP server** ships with the plugin so Claude itself can search your conversation history during a new session: *"what did we try for the rate-limiter bug last week?"* → Claude calls the `search_messages` tool → answers with real evidence from your past work.
 
@@ -38,8 +40,8 @@ You use claude normally           This plugin runs in background
                                     tool calls, thinking, images
                                          |
                                          v
-                                    PostgreSQL stores everything
-                                    (ACID safe, never loses data)
+                                    SQLite stores everything
+                                    (WAL + FTS5, ACID safe)
                                          |
                           +-----------------------------+
                           |                             |
@@ -60,16 +62,25 @@ This bundles the MCP server, the slash commands, and the watcher all in one inst
 /plugin install claude-postgres-plugin@songtonyli-plugins
 ```
 
-One-time setup in the plugin cache directory (until v0.2 ships a pre-bundled binary):
+**Prerequisites**: Bun installed (`curl -fsSL https://bun.sh/install | bash`). That's it — **no Postgres, no `createdb`, no database service to manage**. The DB is a single SQLite file under `~/.claude-postgres-plugin/cpg.sqlite` (or `${CLAUDE_PLUGIN_DATA}` if Claude Code provides one).
+
+One-time setup in the plugin cache directory:
 
 ```bash
 # Replace the path below with whatever /plugin install reported, typically:
 cd ~/.claude/plugins/cache/songtonyli-plugins/claude-postgres-plugin
 
 bun install                                          # backend deps
-(cd web && bun install && bun --bun vite build)      # frontend bundle
-createdb claude_sessions                             # if you haven't already
+(cd web && bun install && bun --bun vite build)      # frontend bundle (only needed if you'll use the dashboard)
 ```
+
+Optional — compile to a standalone binary (drops Bun runtime requirement for the MCP server, recommended for users who want zero-runtime-dep):
+
+```bash
+bun run build      # produces bin/cpg (~96 MB), platform-specific
+```
+
+> v0.3 will ship pre-built per-platform binaries via GitHub Releases so this step disappears entirely.
 
 That's it. From any Claude Code session you now have:
 
@@ -96,29 +107,22 @@ That's it. From any Claude Code session you now have:
 
 Use this if you want only the dashboard and don't need MCP integration.
 
-**Prerequisites**
-
-- **Bun**: `npm install -g bun` or `curl -fsSL https://bun.sh/install | bash`
-- **PostgreSQL**: `brew install postgresql@14` (Mac) or see [postgresql.org](https://www.postgresql.org/download/)
+**Prerequisite**: Bun. That's literally it. (No Postgres. No `createdb`. No service to start.)
 
 **Setup**
 
 ```bash
-brew services start postgresql@14    # Mac
-# or: sudo systemctl start postgresql # Linux
-
-createdb claude_sessions
-
 git clone https://github.com/SongTonyLi/claude-postgres-plugin.git
 cd claude-postgres-plugin
 bun install
 (cd web && bun install && bun --bun vite build)
-bun run src/db/migrate.ts          # create tables
-bun run src/index.ts import        # import existing sessions
+bun run src/index.ts import        # import existing sessions (creates the SQLite file on first run)
 bun run src/index.ts start         # watch + serve dashboard
 ```
 
 Open **http://localhost:3456**.
+
+The SQLite file is created automatically at `~/.claude-postgres-plugin/cpg.sqlite` on first run. Override the location with `CPG_DB_PATH` or `CPG_DATA_DIR`.
 
 ## Usage
 
@@ -130,7 +134,7 @@ Open **http://localhost:3456**.
 
 ### Search (Cmd+K)
 
-Press `Cmd+K` (Mac) / `Ctrl+K` (Linux/Windows) or click the search bar to fuzzy-search across **every** past conversation. Uses Postgres `pg_trgm` trigram similarity plus `ILIKE` fallback.
+Press `Cmd+K` (Mac) / `Ctrl+K` (Linux/Windows) or click the search bar to fuzzy-search across **every** past conversation. Uses SQLite FTS5 with prefix matching, then falls back to substring `LIKE` for matches FTS5 misses.
 
 From inside Claude Code, you can also ask Claude directly: *"search my past sessions for X"* — Claude will use the `search_messages` MCP tool and surface the relevant snippets with session IDs you can resume from.
 
@@ -172,40 +176,44 @@ bun test                     # Run tests
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `postgres://localhost:5432/claude_sessions` | PostgreSQL connection |
+| `CPG_DB_PATH` | (see `CPG_DATA_DIR`) | Full path to the SQLite database file. Use `:memory:` for an ephemeral in-process DB (used by tests). |
+| `CPG_DATA_DIR` | `${CLAUDE_PLUGIN_DATA}` if set, else `~/.claude-postgres-plugin/` | Directory containing `cpg.sqlite`. |
 | `CPG_PORT` | `3456` | Dashboard port |
+| `CPG_WEB_DIST` | (auto-resolved) | Override the location of the built web frontend. Auto-discovered relative to the binary or source. |
 
 When running as a Claude Code plugin, set these in your shell or `.env` before launching `claude`. The MCP server inherits them.
 
 ## Architecture
 
-**Backend**: Bun + TypeScript, PostgreSQL (postgres.js), Hono HTTP server, native `fs.watch`
+**Backend**: Bun + TypeScript, embedded SQLite via `bun:sqlite` (zero install), Hono HTTP server, native `fs.watch`
 **MCP server**: bare stdio JSON-RPC, no extra dependencies, reuses the same `ConversationStore`
 **Frontend**: React 19 + Tailwind CSS v4 + Vite, Open WebUI-inspired layout
-**Database**: 4 tables (`sessions`, `messages`, `tool_calls`, `raw_events`) with ACID guarantees, `pg_trgm` indexes for fuzzy search
+**Database**: 4 tables (`sessions`, `messages`, `tool_calls`, `raw_events`) plus a `messages_fts` FTS5 virtual table. WAL journal mode + `synchronous = FULL` + `foreign_keys = ON` for full ACID + multi-process safety (one writer, many readers, snapshot isolation across processes)
+**Distribution**: standard `bun run` for v0.2; single-binary `bun build --compile` opt-in (`bun run build` produces `bin/cpg`); v0.3 will ship per-platform binaries via GitHub Releases
 
 ## Current Status
 
-- [x] PostgreSQL schema + migrations (ACID transactions)
+- [x] **v0.2: SQLite swap** — dropped PostgreSQL dep entirely, embedded WAL + FTS5
+- [x] Schema + migrations (ACID via WAL + `synchronous = FULL` + foreign keys)
 - [x] Session file watcher (real-time detection)
 - [x] Ingest pipeline (race-condition safe, deduplication)
 - [x] REST API + SSE real-time streaming
 - [x] Web dashboard (Open WebUI style — sidebar + chat view)
 - [x] Inline tool call and tool result rendering
 - [x] Image / document attachment preservation and serving
-- [x] Global search with `pg_trgm` fuzzy matching (Cmd+K)
+- [x] Global search with FTS5 prefix matching + LIKE fallback (Cmd+K)
 - [x] XML export of selected messages
 - [x] Session hiding
 - [x] Message selection with checkboxes
-- [x] **MCP server with 5 search/inspect tools**
-- [x] **Slash commands: `/cpg-search`, `/cpg-recent`, `/cpg-session`, `/cpg-start`**
-- [x] **Single-plugin marketplace catalog**
-- [x] 25 tests passing
-- [x] Verified with 134 real sessions, 28k+ messages
+- [x] MCP server with 5 search/inspect tools
+- [x] Slash commands: `/cpg-search`, `/cpg-recent`, `/cpg-session`, `/cpg-start`
+- [x] Single-plugin marketplace catalog
+- [x] `bun build --compile` produces a working single binary (96 MB, platform-specific)
+- [x] 25 tests passing against `:memory:` SQLite
 
 ## Next Steps
 
-1. **Pre-bundled MCP server** — ship a `bun build` artifact so plugin install doesn't need a manual `bun install`
+1. **v0.3 — pre-built per-platform binaries via GitHub Releases** — drops the Bun runtime requirement entirely; truly zero-dep `/plugin install`
 2. **Live session streaming** — real-time message appearance in dashboard via SSE during active sessions
 3. **Session metadata panel** — model, token usage, duration, tool stats
 4. **Conversation branching** — visualize sidechain/forked conversations
