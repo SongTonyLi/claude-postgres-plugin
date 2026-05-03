@@ -1,5 +1,7 @@
 # claude-postgres-plugin
 
+https://github.com/user-attachments/assets/49c8e498-d7ca-4390-96b8-38e6397b6760
+
 PostgreSQL-backed conversation viewer for Claude Code. Never lose a conversation again.
 
 Automatically watches your claude-code session files, stores every message in PostgreSQL, and gives you a web dashboard to browse and search all your past conversations.
