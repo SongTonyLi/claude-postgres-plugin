@@ -10,7 +10,8 @@
     "start": "bun run src/index.ts start",
     "web": "bun run src/index.ts web",
     "import": "bun run src/index.ts import",
-    "test": "bun test"
+    "mcp": "bun run src/mcp-server.ts",
+    "test": "CPG_DB_PATH=:memory: bun test"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -21,7 +22,6 @@
   "dependencies": {
     "@hono/node-server": "^2.0.1",
     "eventemitter3": "^5.0.4",
-    "hono": "^4.12.16",
-    "postgres": "^3.4.9"
+    "hono": "^4.12.16"
   }
 }
