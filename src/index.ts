@@ -6,7 +6,7 @@ import { createApp } from "./server/app";
 import { closeDb } from "./db/connection";
 import { runMcpServer } from "./mcp-server";
 
-const PORT = parseInt(process.env.CPG_PORT || "3456");
+const PORT = parseInt(process.env.CSP_PORT || "3456");
 
 async function main() {
   const command = process.argv[2] || "start";
@@ -20,7 +20,7 @@ async function main() {
   } else if (command === "mcp") {
     await runMcpServer();
   } else {
-    console.log("Usage: cpg [start|web|import|mcp]");
+    console.log("Usage: csp [start|web|import|mcp]");
     console.log("  start   - Start watcher + web dashboard (default)");
     console.log("  web     - Start only the web dashboard");
     console.log("  import  - Import existing session files");
@@ -30,7 +30,7 @@ async function main() {
 }
 
 async function startAll() {
-  console.log("Starting claude-postgres-plugin...");
+  console.log("Starting claude-sqlite-plugin...");
 
   await runMigrations();
   const store = new ConversationStore();

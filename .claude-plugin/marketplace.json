@@ -4,7 +4,7 @@
   "description": "Claude Code plugins by Song Li",
   "plugins": [
     {
-      "name": "claude-postgres-plugin",
+      "name": "claude-sqlite-plugin",
       "source": "./",
       "description": "Embedded conversation viewer + MCP search for past Claude Code session history",
       "category": "history",

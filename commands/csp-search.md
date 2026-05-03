@@ -5,7 +5,7 @@ argument-hint: <search phrase>
 
 Search the user's past Claude Code conversations for: **$ARGUMENTS**
 
-Use the `search_messages` tool from the `claude-postgres` MCP server (default mode is `fuzzy`, limit 10). Render the top results as a table or list with:
+Use the `search_messages` tool from the `claude-sqlite` MCP server (default mode is `fuzzy`, limit 10). Render the top results as a table or list with:
 
 - **Session title** (or `(untitled)` if missing) — truncate to ~60 chars
 - **Date** of the matching message (e.g. `2026-04-12`)
@@ -15,4 +15,4 @@ Use the `search_messages` tool from the `claude-postgres` MCP server (default mo
 
 If `$ARGUMENTS` is empty, ask the user what to search for instead of calling the tool.
 
-After showing results, briefly suggest a follow-up — e.g. `/cpg-session <id>` to inspect a specific session in detail.
+After showing results, briefly suggest a follow-up — e.g. `/csp-session <id>` to inspect a specific session in detail.

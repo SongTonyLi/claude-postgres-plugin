@@ -1,10 +1,10 @@
 {
-  "name": "claude-postgres-plugin",
+  "name": "claude-sqlite-plugin",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
   "bin": {
-    "cpg": "src/index.ts"
+    "csp": "src/index.ts"
   },
   "scripts": {
     "start": "bun run src/index.ts start",
@@ -12,9 +12,9 @@
     "import": "bun run src/index.ts import",
     "mcp": "bun run src/mcp-server.ts",
     "build:web": "cd web && bun --bun vite build",
-    "build:bin": "bun build --compile src/index.ts --outfile bin/cpg",
+    "build:bin": "bun build --compile src/index.ts --outfile bin/csp",
     "build": "bun run build:web && bun run build:bin",
-    "test": "CPG_DB_PATH=:memory: bun test"
+    "test": "CSP_DB_PATH=:memory: bun test"
   },
   "devDependencies": {
     "@types/bun": "latest"

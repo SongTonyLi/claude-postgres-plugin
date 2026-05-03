@@ -8,16 +8,16 @@ import type { ConversationStore } from "../store/conversation-store";
 import type { SSEManager } from "./sse";
 
 // Resolve the web/dist directory across three runtime modes:
-//   1. Explicit CPG_WEB_DIST env var (overrides everything)
-//   2. Compiled binary at bin/cpg with web/dist as a sibling of bin/
+//   1. Explicit CSP_WEB_DIST env var (overrides everything)
+//   2. Compiled binary at bin/csp with web/dist as a sibling of bin/
 //   3. Dev mode: running via `bun run`, web/dist is two levels up from this file
 function resolveWebDist(): string {
-  const explicit = process.env.CPG_WEB_DIST;
+  const explicit = process.env.CSP_WEB_DIST;
   if (explicit) return explicit;
 
   const binDir = dirname(process.execPath);
   const candidates = [
-    join(binDir, "..", "web", "dist"), // bin/cpg + web/dist as sibling of bin/
+    join(binDir, "..", "web", "dist"), // bin/csp + web/dist as sibling of bin/
     join(binDir, "web", "dist"),       // bin/ contains web/dist directly
   ];
   for (const c of candidates) if (existsSync(c)) return c;

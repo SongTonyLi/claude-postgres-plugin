@@ -1,14 +1,14 @@
 {
-  "name": "claude-postgres-plugin",
-  "version": "0.2.0",
+  "name": "claude-sqlite-plugin",
+  "version": "0.2.1",
   "description": "Embedded conversation viewer + MCP search for past Claude Code session history (zero-Postgres SQLite + FTS5)",
   "author": { "name": "Song Li" },
-  "homepage": "https://github.com/SongTonyLi/claude-postgres-plugin",
-  "repository": "https://github.com/SongTonyLi/claude-postgres-plugin",
+  "homepage": "https://github.com/SongTonyLi/claude-sqlite-plugin",
+  "repository": "https://github.com/SongTonyLi/claude-sqlite-plugin",
   "license": "MIT",
   "keywords": ["history", "search", "mcp", "sessions", "viewer", "sqlite"],
   "mcpServers": {
-    "claude-postgres": {
+    "claude-sqlite": {
       "command": "bun",
       "args": ["run", "${CLAUDE_PLUGIN_ROOT}/src/mcp-server.ts"]
     }

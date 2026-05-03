@@ -5,7 +5,7 @@ argument-hint: [count]
 
 List the user's most recent Claude Code sessions.
 
-Use the `list_recent_sessions` tool from the `claude-postgres` MCP server. If `$ARGUMENTS` is a positive integer, pass it as `limit` (clamped to 1–200). Otherwise default to 10.
+Use the `list_recent_sessions` tool from the `claude-sqlite` MCP server. If `$ARGUMENTS` is a positive integer, pass it as `limit` (clamped to 1–200). Otherwise default to 10.
 
 Render as a numbered list with:
 
@@ -15,4 +15,4 @@ Render as a numbered list with:
 4. **Messages** — count
 5. **ID** — short (first 8 chars)
 
-After the list, mention the user can run `/cpg-session <id>` to inspect any of them, or `/cpg-search <phrase>` to fuzzy-search across all sessions.
+After the list, mention the user can run `/csp-session <id>` to inspect any of them, or `/csp-search <phrase>` to fuzzy-search across all sessions.

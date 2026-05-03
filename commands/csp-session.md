@@ -10,7 +10,7 @@ Parse `$ARGUMENTS` as `<session-id> [N]`. The session ID may be a full UUID or a
 Steps:
 
 1. Call `get_session` with the resolved session id.
-   - If `found: false`, tell the user the id was not found and suggest `/cpg-recent` to browse.
+   - If `found: false`, tell the user the id was not found and suggest `/csp-recent` to browse.
 2. Call `get_session_messages` with `limit: N` and `offset: max(0, total_messages - N)` so we get the *tail* of the conversation.
 3. Render a header with: title, project path, model, status, started/ended, total message count.
 4. Render each returned message: role, timestamp, content snippet (first ~400 chars), any `tool_uses`, flags like `has_image` / `has_document` / `is_sidechain`.

@@ -22,7 +22,7 @@ beforeEach(async () => {
   db.exec(
     "DELETE FROM raw_events; DELETE FROM tool_calls; DELETE FROM messages; DELETE FROM sessions;"
   );
-  testDir = join(tmpdir(), "cpg-e2e-" + Date.now());
+  testDir = join(tmpdir(), "csp-e2e-" + Date.now());
   mkdirSync(testDir, { recursive: true });
 });
 

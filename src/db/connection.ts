@@ -6,17 +6,17 @@ import { homedir } from "os";
 let db: Database | undefined;
 
 function resolveDbPath(): string {
-  const explicit = process.env.CPG_DB_PATH;
+  const explicit = process.env.CSP_DB_PATH;
   if (explicit) return explicit;
 
-  const explicitDir = process.env.CPG_DATA_DIR;
-  if (explicitDir) return join(explicitDir, "cpg.sqlite");
+  const explicitDir = process.env.CSP_DATA_DIR;
+  if (explicitDir) return join(explicitDir, "csp.sqlite");
 
   // Standard env var Claude Code sets for plugin persistent state.
   const pluginData = process.env.CLAUDE_PLUGIN_DATA;
-  if (pluginData) return join(pluginData, "cpg.sqlite");
+  if (pluginData) return join(pluginData, "csp.sqlite");
 
-  return join(homedir(), ".claude-postgres-plugin", "cpg.sqlite");
+  return join(homedir(), ".claude-sqlite-plugin", "csp.sqlite");
 }
 
 export function getDb(): Database {

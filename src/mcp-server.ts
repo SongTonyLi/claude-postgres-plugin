@@ -3,7 +3,7 @@ import { ConversationStore, type MessageRecord, type SessionRecord, type ToolCal
 import { closeDb } from "./db/connection";
 import { runMigrations } from "./db/migrate";
 
-const log = (...args: unknown[]) => console.error("[cpg-mcp]", ...args);
+const log = (...args: unknown[]) => console.error("[csp-mcp]", ...args);
 
 const store = new ConversationStore();
 
@@ -238,7 +238,7 @@ async function dispatch(req: JsonRpcRequest): Promise<void> {
     reply(id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "claude-postgres", version: "0.2.0" },
+      serverInfo: { name: "claude-sqlite", version: "0.2.1" },
     });
     return;
   }

@@ -1,4 +1,4 @@
--- SQLite schema for claude-postgres-plugin (despite the name, the DB is now embedded SQLite).
+-- SQLite schema for claude-sqlite-plugin (despite the name, the DB is now embedded SQLite).
 -- ACID is preserved via WAL + synchronous=FULL + foreign_keys=ON, all set per-connection in connection.ts.
 
 CREATE TABLE IF NOT EXISTS sessions (

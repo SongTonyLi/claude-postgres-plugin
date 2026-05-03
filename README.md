@@ -1,4 +1,4 @@
-# claude-postgres-plugin
+# claude-sqlite-plugin
 
 https://github.com/user-attachments/assets/49c8e498-d7ca-4390-96b8-38e6397b6760
 
@@ -58,17 +58,17 @@ You use claude normally           This plugin runs in background
 This bundles the MCP server, the slash commands, and the watcher all in one install.
 
 ```text
-/plugin marketplace add SongTonyLi/claude-postgres-plugin
-/plugin install claude-postgres-plugin@songtonyli-plugins
+/plugin marketplace add SongTonyLi/claude-sqlite-plugin
+/plugin install claude-sqlite-plugin@songtonyli-plugins
 ```
 
-**Prerequisites**: Bun installed (`curl -fsSL https://bun.sh/install | bash`). That's it — **no Postgres, no `createdb`, no database service to manage**. The DB is a single SQLite file under `~/.claude-postgres-plugin/cpg.sqlite` (or `${CLAUDE_PLUGIN_DATA}` if Claude Code provides one).
+**Prerequisites**: Bun installed (`curl -fsSL https://bun.sh/install | bash`). That's it — **no Postgres, no `createdb`, no database service to manage**. The DB is a single SQLite file under `~/.claude-sqlite-plugin/csp.sqlite` (or `${CLAUDE_PLUGIN_DATA}` if Claude Code provides one).
 
 One-time setup in the plugin cache directory:
 
 ```bash
 # Replace the path below with whatever /plugin install reported, typically:
-cd ~/.claude/plugins/cache/songtonyli-plugins/claude-postgres-plugin
+cd ~/.claude/plugins/cache/songtonyli-plugins/claude-sqlite-plugin
 
 bun install                                          # backend deps
 (cd web && bun install && bun --bun vite build)      # frontend bundle (only needed if you'll use the dashboard)
@@ -77,14 +77,14 @@ bun install                                          # backend deps
 Optional — compile to a standalone binary (drops Bun runtime requirement for the MCP server, recommended for users who want zero-runtime-dep):
 
 ```bash
-bun run build      # produces bin/cpg (~96 MB), platform-specific
+bun run build      # produces bin/csp (~96 MB), platform-specific
 ```
 
 > v0.3 will ship pre-built per-platform binaries via GitHub Releases so this step disappears entirely.
 
 That's it. From any Claude Code session you now have:
 
-**MCP tools** Claude can call autonomously (no slash command needed — Claude picks them up from the `claude-postgres` MCP server when relevant):
+**MCP tools** Claude can call autonomously (no slash command needed — Claude picks them up from the `claude-sqlite` MCP server when relevant):
 
 | Tool | What it does |
 |---|---|
@@ -98,10 +98,10 @@ That's it. From any Claude Code session you now have:
 
 | Command | What it does |
 |---|---|
-| `/cpg-search <phrase>` | Fuzzy-search past sessions and show top matches with session IDs |
-| `/cpg-recent [count]` | List the most recent N sessions (default 10) |
-| `/cpg-session <id> [N]` | Show metadata + last N messages for a session |
-| `/cpg-start` | Start the watcher + web dashboard in the background |
+| `/csp-search <phrase>` | Fuzzy-search past sessions and show top matches with session IDs |
+| `/csp-recent [count]` | List the most recent N sessions (default 10) |
+| `/csp-session <id> [N]` | Show metadata + last N messages for a session |
+| `/csp-start` | Start the watcher + web dashboard in the background |
 
 ### Option B — Standalone (no Claude Code plugin)
 
@@ -112,8 +112,8 @@ Use this if you want only the dashboard and don't need MCP integration.
 **Setup**
 
 ```bash
-git clone https://github.com/SongTonyLi/claude-postgres-plugin.git
-cd claude-postgres-plugin
+git clone https://github.com/SongTonyLi/claude-sqlite-plugin.git
+cd claude-sqlite-plugin
 bun install
 (cd web && bun install && bun --bun vite build)
 bun run src/index.ts import        # import existing sessions (creates the SQLite file on first run)
@@ -122,13 +122,13 @@ bun run src/index.ts start         # watch + serve dashboard
 
 Open **http://localhost:3456**.
 
-The SQLite file is created automatically at `~/.claude-postgres-plugin/cpg.sqlite` on first run. Override the location with `CPG_DB_PATH` or `CPG_DATA_DIR`.
+The SQLite file is created automatically at `~/.claude-sqlite-plugin/csp.sqlite` on first run. Override the location with `CSP_DB_PATH` or `CSP_DATA_DIR`.
 
 ## Usage
 
 ### Real-time browsing while you code
 
-1. Start the plugin (`/cpg-start` if installed as a plugin, or `bun run src/index.ts start` standalone).
+1. Start the plugin (`/csp-start` if installed as a plugin, or `bun run src/index.ts start` standalone).
 2. Use Claude Code normally in another terminal: `claude`.
 3. Open `http://localhost:3456`. New messages appear in the dashboard as Claude Code writes them.
 
@@ -176,10 +176,10 @@ bun test                     # Run tests
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CPG_DB_PATH` | (see `CPG_DATA_DIR`) | Full path to the SQLite database file. Use `:memory:` for an ephemeral in-process DB (used by tests). |
-| `CPG_DATA_DIR` | `${CLAUDE_PLUGIN_DATA}` if set, else `~/.claude-postgres-plugin/` | Directory containing `cpg.sqlite`. |
-| `CPG_PORT` | `3456` | Dashboard port |
-| `CPG_WEB_DIST` | (auto-resolved) | Override the location of the built web frontend. Auto-discovered relative to the binary or source. |
+| `CSP_DB_PATH` | (see `CSP_DATA_DIR`) | Full path to the SQLite database file. Use `:memory:` for an ephemeral in-process DB (used by tests). |
+| `CSP_DATA_DIR` | `${CLAUDE_PLUGIN_DATA}` if set, else `~/.claude-sqlite-plugin/` | Directory containing `csp.sqlite`. |
+| `CSP_PORT` | `3456` | Dashboard port |
+| `CSP_WEB_DIST` | (auto-resolved) | Override the location of the built web frontend. Auto-discovered relative to the binary or source. |
 
 When running as a Claude Code plugin, set these in your shell or `.env` before launching `claude`. The MCP server inherits them.
 
@@ -189,7 +189,7 @@ When running as a Claude Code plugin, set these in your shell or `.env` before l
 **MCP server**: bare stdio JSON-RPC, no extra dependencies, reuses the same `ConversationStore`
 **Frontend**: React 19 + Tailwind CSS v4 + Vite, Open WebUI-inspired layout
 **Database**: 4 tables (`sessions`, `messages`, `tool_calls`, `raw_events`) plus a `messages_fts` FTS5 virtual table. WAL journal mode + `synchronous = FULL` + `foreign_keys = ON` for full ACID + multi-process safety (one writer, many readers, snapshot isolation across processes)
-**Distribution**: standard `bun run` for v0.2; single-binary `bun build --compile` opt-in (`bun run build` produces `bin/cpg`); v0.3 will ship per-platform binaries via GitHub Releases
+**Distribution**: standard `bun run` for v0.2; single-binary `bun build --compile` opt-in (`bun run build` produces `bin/csp`); v0.3 will ship per-platform binaries via GitHub Releases
 
 ## Current Status
 
@@ -206,7 +206,7 @@ When running as a Claude Code plugin, set these in your shell or `.env` before l
 - [x] Session hiding
 - [x] Message selection with checkboxes
 - [x] MCP server with 5 search/inspect tools
-- [x] Slash commands: `/cpg-search`, `/cpg-recent`, `/cpg-session`, `/cpg-start`
+- [x] Slash commands: `/csp-search`, `/csp-recent`, `/csp-session`, `/csp-start`
 - [x] Single-plugin marketplace catalog
 - [x] `bun build --compile` produces a working single binary (96 MB, platform-specific)
 - [x] 25 tests passing against `:memory:` SQLite
