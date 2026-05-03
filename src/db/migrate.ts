@@ -4,14 +4,15 @@ import { fileURLToPath } from "url";
 import { getDb } from "./connection";
 
 export async function runMigrations(): Promise<void> {
-  const sql = getDb();
+  const db = getDb();
   const schemaPath = join(dirname(fileURLToPath(import.meta.url)), "schema.sql");
   const schema = readFileSync(schemaPath, "utf-8");
-  await sql.unsafe(schema);
-  console.log("Migrations complete");
+  db.exec(schema);
+  // stderr is safe for both standalone use and the stdio MCP server (which
+  // reserves stdout for the JSON-RPC protocol).
+  console.error("Migrations complete");
 }
 
-// Allow running directly
 if (import.meta.main) {
   runMigrations()
     .then(() => process.exit(0))

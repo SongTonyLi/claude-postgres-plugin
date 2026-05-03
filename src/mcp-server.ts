@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { ConversationStore, type MessageRecord, type SessionRecord, type ToolCallRecord } from "./store/conversation-store";
 import { closeDb } from "./db/connection";
+import { runMigrations } from "./db/migrate";
 
 const log = (...args: unknown[]) => console.error("[cpg-mcp]", ...args);
 
@@ -282,7 +283,8 @@ async function dispatch(req: JsonRpcRequest): Promise<void> {
 }
 
 async function main() {
-  log(`started, db = ${process.env.DATABASE_URL || "postgres://localhost:5432/claude_sessions"}`);
+  await runMigrations();
+  log("started");
 
   let buf = "";
   process.stdin.setEncoding("utf8");

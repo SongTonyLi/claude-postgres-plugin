@@ -10,8 +10,10 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  const sql = getDb();
-  await sql`TRUNCATE raw_events, tool_calls, messages, sessions CASCADE`;
+  const db = getDb();
+  db.exec(
+    "DELETE FROM raw_events; DELETE FROM tool_calls; DELETE FROM messages; DELETE FROM sessions;"
+  );
 });
 
 afterAll(async () => {
@@ -149,8 +151,10 @@ describe("ConversationStore", () => {
       lineNumber: 1,
     });
 
-    const sql = getDb();
-    const rows = await sql`SELECT * FROM raw_events WHERE session_id = 'sess-raw'`;
+    const db = getDb();
+    const rows = db
+      .prepare("SELECT * FROM raw_events WHERE session_id = ?")
+      .all("sess-raw") as any[];
     expect(rows.length).toBe(1);
     expect(rows[0]!.event_type).toBe("user");
   });
@@ -205,7 +209,7 @@ describe("Database Integrity", () => {
   });
 
   test("cascade delete removes messages when session deleted", async () => {
-    const sql = getDb();
+    const db = getDb();
     await store.upsertSession({
       id: "cascade-test",
       projectPath: "/tmp",
@@ -227,7 +231,7 @@ describe("Database Integrity", () => {
       timestamp: new Date(),
     });
 
-    await sql`DELETE FROM sessions WHERE id = 'cascade-test'`;
+    db.exec("DELETE FROM sessions WHERE id = 'cascade-test'");
     const messages = await store.getMessages("cascade-test");
     expect(messages.length).toBe(0);
   });
