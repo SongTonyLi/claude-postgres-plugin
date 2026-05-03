@@ -238,12 +238,14 @@ async function dispatch(req: JsonRpcRequest): Promise<void> {
     reply(id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "claude-postgres", version: "0.1.0" },
+      serverInfo: { name: "claude-postgres", version: "0.2.0" },
     });
     return;
   }
 
-  if (method === "notifications/initialized" || method === "notifications/cancelled") {
+  // MCP notifications never expect a response. Swallow the whole namespace so
+  // future notifications/* don't fall through to the method-not-found branch.
+  if (method.startsWith("notifications/")) {
     return;
   }
 

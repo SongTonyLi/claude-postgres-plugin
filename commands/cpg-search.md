@@ -1,5 +1,5 @@
 ---
-description: Search across all past Claude Code conversations stored in Postgres
+description: Search across all past Claude Code conversations stored in the local SQLite database
 argument-hint: <search phrase>
 ---
 

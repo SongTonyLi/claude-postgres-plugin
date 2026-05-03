@@ -134,13 +134,13 @@ The SQLite file is created automatically at `~/.claude-postgres-plugin/cpg.sqlit
 
 ### Search (Cmd+K)
 
-Press `Cmd+K` (Mac) / `Ctrl+K` (Linux/Windows) or click the search bar to fuzzy-search across **every** past conversation. Uses SQLite FTS5 with prefix matching, then falls back to substring `LIKE` for matches FTS5 misses.
+Press `Cmd+K` (Mac) / `Ctrl+K` (Linux/Windows) or click the search bar to fuzzy-search across **every** past conversation. Uses SQLite FTS5 with prefix matching on each word; if FTS5 returns no hits, falls back to a substring `LIKE` scan as a backup.
 
 From inside Claude Code, you can also ask Claude directly: *"search my past sessions for X"* — Claude will use the `search_messages` MCP tool and surface the relevant snippets with session IDs you can resume from.
 
 ### Image and document attachments are preserved
 
-When you paste an image into Claude Code (drag-and-drop, clipboard paste, or `@`-mention a PDF / file), Claude Code base64-encodes the bytes into the session JSONL. This plugin extracts those blocks and stores the raw bytes in Postgres.
+When you paste an image into Claude Code (drag-and-drop, clipboard paste, or `@`-mention a PDF / file), Claude Code base64-encodes the bytes into the session JSONL. This plugin extracts those blocks and stores the raw bytes in SQLite.
 
 That means:
 

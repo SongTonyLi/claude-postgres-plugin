@@ -8,7 +8,7 @@
       "source": "./",
       "description": "Embedded conversation viewer + MCP search for past Claude Code session history",
       "category": "history",
-      "tags": ["postgres", "history", "search", "mcp", "viewer"]
+      "tags": ["sqlite", "history", "search", "mcp", "viewer"]
     }
   ]
 }
