@@ -3,12 +3,12 @@
 https://github.com/user-attachments/assets/cb254f18-082b-4fe6-99d9-763d7dcd185f
 
 
-
-Embedded conversation viewer **and MCP search server** for Claude Code. Never lose a conversation, never lose context — even when your network drops mid-session.
+Embedded conversation viewer **and MCP search server** for Claude Code. Never lose a conversation, never lose context, even when your network drops mid-session or anthropic suddenly goes bankrupt after IPO😅.
 
 > **Renamed in v0.2.1.** The project was originally `claude-postgres-plugin` (PostgreSQL-backed). v0.2 swapped the database for embedded SQLite (WAL + FTS5) — no daemon, no `createdb`, no separate database service — and v0.2.1 renamed everything user-visible to match: plugin id `claude-sqlite-plugin`, MCP server `claude-sqlite`, slash commands `/csp-*`. If you installed v0.2.0 under the old name, run `/plugin uninstall claude-postgres-plugin@songtonyli-plugins` then reinstall under the new name. The old GitHub URL still redirects.
 
 ## The problem this solves
+You want to copy some conversations from Claude Code to other AI agent to resume the work. 
 
 You SSH into a remote dev box and kick off a long Claude Code "vibe coding" session. Two hours in, your home Wi-Fi flakes for 30 seconds. The SSH connection dies. You reconnect, run:
 
