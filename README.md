@@ -124,51 +124,60 @@ Open **http://localhost:3456**.
 
 The SQLite file is created automatically at `~/.claude-sqlite-plugin/csp.sqlite` on first run. Override the location with `CSP_DB_PATH` or `CSP_DATA_DIR`.
 
+## Quick examples
+
+```bash
+# Start watcher + dashboard (plugin)
+/csp-start
+
+# Start watcher + dashboard (standalone)
+bun run src/index.ts start       # then open http://localhost:3456
+
+# Search past conversations from inside Claude Code
+/csp-search rate limiter bug
+
+# List recent sessions
+/csp-recent 20
+
+# Inspect a specific session
+/csp-session a745301c
+
+# Resume a found session directly in Claude Code
+claude --resume a745301c-fe8a-4f20-97bf-4fda1f1f2ad2
+
+# Ask Claude to search for you (no slash command needed — Claude uses the MCP tools)
+> "What did we try for the auth middleware rewrite last week?"
+```
+
 ## Usage
 
-### Real-time browsing while you code
+### Real-time browsing
 
-1. Start the plugin (`/csp-start` if installed as a plugin, or `bun run src/index.ts start` standalone).
-2. Use Claude Code normally in another terminal: `claude`.
-3. Open `http://localhost:3456`. New messages appear in the dashboard as Claude Code writes them.
+Start the watcher, use Claude Code normally, open `http://localhost:3456`. Messages appear in the dashboard as Claude writes them.
 
 ### Search (Cmd+K)
 
-Press `Cmd+K` (Mac) / `Ctrl+K` (Linux/Windows) or click the search bar to fuzzy-search across **every** past conversation. Uses SQLite FTS5 with prefix matching on each word; if FTS5 returns no hits, falls back to a substring `LIKE` scan as a backup.
+`Cmd+K` / `Ctrl+K` in the dashboard fuzzy-searches every past conversation (FTS5 prefix matching, LIKE fallback). From Claude Code, just ask — Claude calls `search_messages` automatically.
 
-From inside Claude Code, you can also ask Claude directly: *"search my past sessions for X"* — Claude will use the `search_messages` MCP tool and surface the relevant snippets with session IDs you can resume from.
+### Images and documents
 
-### Image and document attachments are preserved
-
-When you paste an image into Claude Code (drag-and-drop, clipboard paste, or `@`-mention a PDF / file), Claude Code base64-encodes the bytes into the session JSONL. This plugin extracts those blocks and stores the raw bytes in SQLite.
-
-That means:
-
-- **Screenshots** of error stacks, terminal output, design mockups — all survive the session and are viewable later
-- **PDFs and documents** you attached for analysis are preserved with the conversation that used them
-- The dashboard renders thumbnails inline; click any thumbnail to open the full-size original
-- Even one-shot pastes that you never saved anywhere else are now permanent
-
-If you used `claude --resume` and lost the original images to autocompact, you can still pull them up in the dashboard and re-attach them to a new session.
+Pasted images, screenshots, PDFs — all extracted from the JSONL and stored in SQLite. Viewable in the dashboard even after autocompact destroys the original context. Click thumbnails for full-size originals.
 
 ### Export to XML
 
-1. Click **Select** in the conversation header
-2. Check the messages you want to export (or use **Select All**)
-3. Click **Export XML** — downloads an XML file with full conversation content, tool calls, results, and references to attached images
+**Select** → check messages → **Export XML**. Useful for handing context to a fresh session, archiving, or feeding to other tools.
 
-Useful for: handing a slice of a session back to a fresh Claude session as context, archiving, or feeding to another tool.
+### Hide sessions
 
-### Hide Sessions
+Hover a session in the sidebar → click the eye icon. Hidden from the list, still in the DB and searchable.
 
-Hover over any session in the sidebar and click the eye icon to hide it. Hidden sessions are excluded from the list but remain in the database (and remain searchable).
-
-### Standalone CLI commands
+### CLI commands
 
 ```bash
-bun run src/index.ts start   # Watch sessions + serve dashboard
-bun run src/index.ts web     # Dashboard only (read from DB, no watcher)
+bun run src/index.ts start   # Watch + dashboard
+bun run src/index.ts web     # Dashboard only (no watcher)
 bun run src/index.ts import  # One-time import of existing sessions
+bun run src/index.ts mcp     # Run as stdio MCP server
 bun test                     # Run tests
 ```
 
