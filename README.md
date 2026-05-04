@@ -34,21 +34,21 @@ You use claude normally           This plugin runs in background
         v                                    v
   claude-code writes                  fs.watch detects
   ~/.claude/projects/*.jsonl    -->   new lines in files
-                                         |
-                                         v
+                                             |
+                                             v
                                     Parser extracts messages,
                                     tool calls, thinking, images
-                                         |
-                                         v
+                                             |
+                                             v
                                     SQLite stores everything
                                     (WAL + FTS5, ACID safe)
-                                         |
-                          +-----------------------------+
-                          |                             |
-                          v                             v
-                  Web dashboard at :3456        MCP tools for Claude
-                  (humans browse visually)      (Claude searches via
-                                                 search_messages, etc.)
+                                             |
+                              +-----------------------------+
+                              |                             |
+                              v                             v
+                  Web dashboard at :3456           MCP tools for Claude
+                  (humans browse visually)         (Claude searches via
+                                                    search_messages, etc.)
 ```
 
 ## Two ways to install
@@ -68,7 +68,7 @@ One-time setup in the plugin cache directory:
 
 ```bash
 # Replace the path below with whatever /plugin install reported, typically:
-cd ~/.claude/plugins/cache/songtonyli-plugins/claude-sqlite-plugin
+cd ~/.claude/plugins/cache/songtonyli-plugins/claude-sqlite-plugin/0.2.1
 
 bun install                                          # backend deps
 (cd web && bun install && bun --bun vite build)      # frontend bundle (only needed if you'll use the dashboard)
