@@ -20,7 +20,7 @@ claude --resume
 
 Same story with: laptop sleep dropping the SSH tunnel, a `tmux` session that didn't survive a reboot, an `iTerm` crash, a cellular hotspot blip on the train.
 
-The JSONL file Claude Code writes to `~/.claude/projects/` survives all of that. But by default, you have no good way to search it, browse it, or hand the relevant slice back to a fresh Claude session — so `--resume` and its autocompact are your only options.
+You can take a look at the JSONL file where Claude Code writes to `~/.claude/projects/`, and you will be surprised that not every conversation, tool result, or assistant answers are saved! But by default, you have no good way to search it, browse it, or hand the relevant slice back to a fresh Claude session — so `--resume` and its autocompact are your only options.
 
 This plugin fixes that:
 
