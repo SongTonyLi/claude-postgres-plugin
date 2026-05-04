@@ -1,6 +1,6 @@
 {
   "name": "claude-sqlite-plugin",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Embedded conversation viewer + MCP search for past Claude Code session history (zero-Postgres SQLite + FTS5)",
   "author": { "name": "Song Li" },
   "homepage": "https://github.com/SongTonyLi/claude-sqlite-plugin",
