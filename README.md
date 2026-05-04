@@ -1,6 +1,8 @@
 # claude-sqlite-plugin
 
-https://github.com/user-attachments/assets/49c8e498-d7ca-4390-96b8-38e6397b6760
+https://github.com/user-attachments/assets/cb254f18-082b-4fe6-99d9-763d7dcd185f
+
+
 
 Embedded conversation viewer **and MCP search server** for Claude Code. Never lose a conversation, never lose context — even when your network drops mid-session.
 
