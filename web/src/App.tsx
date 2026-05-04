@@ -44,7 +44,7 @@ function WelcomePage() {
         </h1>
         <p style={{ fontSize: 14, color: "#6B6B6B", lineHeight: 1.7, margin: "0 0 24px" }}>
           A secure database-backed viewer for your Claude Code conversations.
-          All sessions are stored locally in PostgreSQL for privacy and persistence.
+          All sessions are stored locally in SQLite for privacy and persistence.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
@@ -56,7 +56,7 @@ function WelcomePage() {
               </svg>
             }
             title="Secure local storage"
-            desc="Conversations stored in your PostgreSQL database, never leaving your machine"
+            desc="Conversations stored in your local SQLite database, never leaving your machine"
           />
           <FeatureItem
             icon={

@@ -196,7 +196,7 @@ export function SessionSidebar({ sessions, selectedId, onSelect, onHide, onSearc
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: "#1A1A1A" }}>Local</div>
-          <div style={{ fontSize: 10, color: "#999" }}>PostgreSQL</div>
+          <div style={{ fontSize: 10, color: "#999" }}>SQLite</div>
         </div>
         <span
           style={{
