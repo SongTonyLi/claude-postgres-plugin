@@ -66,23 +66,14 @@ This bundles the MCP server, the slash commands, and the watcher all in one inst
 
 **Prerequisites**: Bun installed (`curl -fsSL https://bun.sh/install | bash`). That's it — **no Postgres, no `createdb`, no database service to manage**. The DB is a single SQLite file under `~/.claude-sqlite-plugin/csp.sqlite` (or `${CLAUDE_PLUGIN_DATA}` if Claude Code provides one).
 
-One-time setup in the plugin cache directory:
+**Dependencies are installed automatically** on the first MCP server start — no manual `bun install` required. If you also want the web dashboard, build the frontend once:
 
 ```bash
 # Replace the path below with whatever /plugin install reported, typically:
-cd ~/.claude/plugins/cache/songtonyli-plugins/claude-sqlite-plugin/0.2.1
+cd ~/.claude/plugins/cache/songtonyli-plugins/claude-sqlite-plugin/0.2.3
 
-bun install                                          # backend deps
 (cd web && bun install && bun --bun vite build)      # frontend bundle (only needed if you'll use the dashboard)
 ```
-
-Optional — compile to a standalone binary (drops Bun runtime requirement for the MCP server, recommended for users who want zero-runtime-dep):
-
-```bash
-bun run build      # produces bin/csp (~96 MB), platform-specific
-```
-
-> v0.3 will ship pre-built per-platform binaries via GitHub Releases so this step disappears entirely.
 
 That's it. From any Claude Code session you now have:
 

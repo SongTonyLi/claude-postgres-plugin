@@ -238,7 +238,7 @@ async function dispatch(req: JsonRpcRequest): Promise<void> {
     reply(id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "claude-sqlite", version: "0.2.1" },
+      serverInfo: { name: "claude-sqlite", version: "0.2.3" },
     });
     return;
   }
