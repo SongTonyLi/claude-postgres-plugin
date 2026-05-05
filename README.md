@@ -94,7 +94,9 @@ That's it. From any Claude Code session you now have:
 | `/csp-search <phrase>` | Fuzzy-search past sessions and show top matches with session IDs |
 | `/csp-recent [count]` | List the most recent N sessions (default 10) |
 | `/csp-session <id> [N]` | Show metadata + last N messages for a session |
+| `/csp-resume [phrase]` | Resume from any point in any past conversation — picks up full context that autocompact destroyed |
 | `/csp-start` | Start the watcher + web dashboard in the background |
+| `/csp-status` | Health check — verify plugin is connected, show DB stats |
 
 ### Option B — Standalone (no Claude Code plugin)
 
@@ -135,12 +137,56 @@ bun run src/index.ts start       # then open http://localhost:3456
 # Inspect a specific session
 /csp-session a745301c
 
-# Resume a found session directly in Claude Code
+# Resume with interactive picker (shows numbered selector)
+/csp-resume
+
+# Search "homework" → pick one or more sessions → load full context into current conversation
+/csp-resume homework
+
+# Unlike `claude --resume`, this loads the FULL transcript (no autocompact),
+# works cross-project, and lets you combine context from multiple sessions.
+
+# Health check — verify everything is connected
+/csp-status
+
+# Traditional resume (subject to autocompact on large sessions)
 claude --resume a745301c-fe8a-4f20-97bf-4fda1f1f2ad2
 
 # Ask Claude to search for you (no slash command needed — Claude uses the MCP tools)
 > "What did we try for the auth middleware rewrite last week?"
 ```
+
+## `/csp-resume` vs `claude --resume`
+
+| | `claude --resume` | `/csp-resume` |
+|---|---|---|
+| **Context** | Autocompacts large sessions into a summary | Loads the **full unabridged transcript** from SQLite |
+| **Scope** | Current project directory only | Any project, any session, cross-directory |
+| **Entry point** | Continues from the end | Load from the beginning, the middle, or any range |
+| **Multi-session** | One session at a time | Select multiple sessions, combine their context |
+| **Images** | Lost after autocompact | Preserved in DB, reloaded as attachments |
+| **Search** | No search (pick from recent list) | Fuzzy search across all message content |
+
+**Example workflow:**
+
+```
+> /csp-resume homework
+
+[1]  Homework: ch5 linear algebra — math301 — yesterday — 34 messages
+[2]  Homework: ch4 eigenvalues — math301 — 3 days ago — 28 messages
+[3]  Homework: ch3 vector spaces — math301 — last week — 41 messages
+
+> 1 2 3
+
+━━━ Loaded 3 sessions (103 messages) ━━━
+Combined context: chapters 3–5 of math301, covering vector spaces,
+eigenvalues, and linear algebra. Key results: ...
+
+Context loaded. You can now:
+  (a) Continue this work right here — I have the full context above.
+```
+
+You now have the full history of all three homework sessions in one conversation — something `claude --resume` simply cannot do.
 
 ## Usage
 
@@ -209,7 +255,7 @@ When running as a Claude Code plugin, set these in your shell or `.env` before l
 - [x] Session hiding
 - [x] Message selection with checkboxes
 - [x] MCP server with 5 search/inspect tools
-- [x] Slash commands: `/csp-search`, `/csp-recent`, `/csp-session`, `/csp-start`
+- [x] Slash commands: `/csp-search`, `/csp-recent`, `/csp-session`, `/csp-resume`, `/csp-start`, `/csp-status`
 - [x] Single-plugin marketplace catalog
 - [x] `bun build --compile` produces a working single binary (96 MB, platform-specific)
 - [x] 25 tests passing against `:memory:` SQLite
@@ -221,4 +267,4 @@ When running as a Claude Code plugin, set these in your shell or `.env` before l
 3. **Session metadata panel** — model, token usage, duration, tool stats
 4. **Conversation branching** — visualize sidechain/forked conversations
 5. **Unhide UI** — settings page to manage hidden sessions
-6. **Auto-resume helper** — slash command that builds a context bundle from a past session for resuming without autocompact loss
+6. ~~**Auto-resume helper** — slash command that builds a context bundle from a past session for resuming without autocompact loss~~ ✅ Shipped as `/csp-resume`
