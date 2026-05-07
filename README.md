@@ -35,7 +35,7 @@ You use claude normally           This plugin runs in background
         |                                    |
         v                                    v
   claude-code writes                  fs.watch detects
-  ~/.claude/projects/*.jsonl    -->   new lines in files
+  ~/.claude/projects/*.jsonl    -->   every changes in CLI
                                              |
                                              v
                                     Parser extracts messages,
