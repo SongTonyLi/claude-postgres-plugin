@@ -5,7 +5,7 @@ argument-hint: [search phrase]
 
 Resume a past Claude Code conversation by selecting from recent or searched sessions.
 
-**Why this exists:** `claude --resume` only continues from the *end* of a session — and if the context is large, it autocompacts first, destroying the detail. `/csp-resume` is different: it reloads the **full preserved transcript** from the SQLite database (which captured every message in real time, before autocompact), lets you pick **any session from any project**, and injects that context into your current conversation. You resume with the *complete* picture — not a one-paragraph summary.
+**Why this exists:** `claude --resume` only continues from the *end* of a session — and if the context is large, it autocompacts first, destroying the detail. `/csp-resume` is different: it reloads the **full preserved transcript** from the SQLite database (which captured every message in real time, before autocompact), lets you pick **any conversations from multiple sessions from any project**, and injects that context into your current conversation. You resume with the *complete* picture, not a one-paragraph summary. For example, you can resume from the workflow related to homework submissions which occurred across multiple sessions over the past week.
 
 ## Step 1 — Gather sessions
 
@@ -17,7 +17,8 @@ Resume a past Claude Code conversation by selecting from recent or searched sess
 Render a **numbered selector** list. For each session show:
 
 ```
-[N]  Title (or "(untitled)")  —  Project basename  —  Started relative time  —  Messages count
+[N]  Title (or summarization)  —  Project basename  —  Started relative time  —  Messages count
+     - Brief snippet from the first user message (up to ~100 chars) -
      Session ID (first 8 chars)
 ```
 
@@ -25,12 +26,15 @@ Example:
 
 ```
 [1]  Fix rate limiter bug — my-api — 2 hours ago — 47 messages
+     - Started debugging rate limiter returning 429 for authenticated users... -
      a745301c
 
-[2]  Homework: chapter 5 exercises — cs101 — yesterday — 23 messages
+[2]  Homework: chapter 5 exercises — cs101 — yesterday — 23 messages -
+     - Working through exercises 5.1 to 5.5 on recursion and dynamic programming... -
      bf920e14
 
-[3]  Refactor auth middleware — backend — 3 days ago — 112 messages
+[3]  Refactor auth middleware — backend — 3 days ago — 112 messages - 
+     - Refactored auth middleware to support multiple strategies (JWT, sessions)... -
      c3d8f72a
 ```
 
@@ -69,6 +73,7 @@ Project: my-api | Model: opus | 47 messages | 2 hours ago
 Key context:
 - [user] Started debugging rate limiter returning 429 for authenticated users...
 - [assistant] Found the issue in middleware/rateLimit.ts — token bucket wasn't...
+- [tool] Called "ReadFile" on "middleware/rateLimit.ts" and got the file contents...
 - [user] That fixed it, but now the Redis connection pool...
   ...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
